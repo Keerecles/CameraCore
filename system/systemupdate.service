@@ -1,0 +1,8 @@
+[Unit]
+Description=OTA
+
+[Service]
+ExecStart=/usr/bin/systemupdate
+
+[Install]
+WantedBy=graphical.target
