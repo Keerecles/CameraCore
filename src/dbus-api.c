@@ -1,4 +1,15 @@
-void SERVICE_handle_method_call( GDBusConnection            *connection,
+#include "Cameradae.h" 
+
+
+extern GDBusNodeInfo *g_mIntrospectionData;
+extern GDBusInterfaceVTable g_mIfaceVTable;
+extern guint g_mNameRequestId;
+extern guint g_mRegistrationId;
+
+extern GQueue *DbustoCommand_queue;
+
+DLT_IMPORT_CONTEXT(Camera_Daemon);
+void CAMERACORE_gst_method_call( GDBusConnection            *connection,
                                       const gchar           *p_sender,
                                       const gchar           *p_object_path,
                                       const gchar           *p_interface_name,
@@ -7,32 +18,32 @@ void SERVICE_handle_method_call( GDBusConnection            *connection,
                                       GDBusMethodInvocation *p_invocation,
                                       gpointer               p_user_data)
 {
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_handle_method_call]"),DLT_STRING("start."),DLT_STRING("p_sender = "),DLT_STRING(p_sender),DLT_STRING("p_object_path = "),DLT_STRING(p_object_path),DLT_STRING("p_interface_name = "),DLT_STRING(p_interface_name));
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_handle_method_call]"),DLT_STRING("p_method_name = "),DLT_STRING(p_method_name));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_gst_method_call]"),DLT_STRING("start."),DLT_STRING("p_sender = "),DLT_STRING(p_sender),DLT_STRING("p_object_path = "),DLT_STRING(p_object_path),DLT_STRING("p_interface_name = "),DLT_STRING(p_interface_name));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_gst_method_call]"),DLT_STRING("p_method_name = "),DLT_STRING(p_method_name));
   
-
+  g_dbus_method_invocation_return_value(p_invocation, NULL);
   command_change();
   
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_handle_method_call]"),DLT_STRING("end."));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_gst_method_call]"),DLT_STRING("end."));
   
   return ;
 }
 
-void SERVICE_acquired_bus_cb(GDBusConnection *p_gdus, const gchar *p_name, gpointer p_data)
+void CAMERACORE_acquired_bus_cb(GDBusConnection *p_gdus, const gchar *p_name, gpointer p_data)
 {
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_acquired_bus_cb]"),DLT_STRING("start. p_name = "),DLT_STRING(p_name));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_acquired_bus_cb]"),DLT_STRING("start. p_name = "),DLT_STRING(p_name));
 
   memset(&g_mIfaceVTable, 0, sizeof(g_mIfaceVTable));
-  g_mIfaceVTable.method_call = SERVICE_handle_method_call;
+  g_mIfaceVTable.method_call = CAMERACORE_gst_method_call;
   
   g_mIntrospectionData = g_dbus_node_info_new_for_xml(CAMERADAE_INTERFACE_XML, NULL);
   if(g_mIntrospectionData == NULL){
-    DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("[loc:SERVICE_acquired_bus_cb]"),DLT_STRING("[fail g_dbus_node_info_new_for_xml]"));
+    DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("[loc:CAMERACORE_acquired_bus_cb]"),DLT_STRING("[fail g_dbus_node_info_new_for_xml]"));
     return;
   }
 
   GError *p_error = NULL;
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_acquired_bus_cb]"),DLT_STRING("CAMERADAE_OBJ_PATH = "),DLT_STRING(CAMERADAE_OBJ_PATH));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_acquired_bus_cb]"),DLT_STRING("CAMERADAE_OBJ_PATH = "),DLT_STRING(CAMERADAE_OBJ_PATH));
   g_mRegistrationId = g_dbus_connection_register_object( g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL),
                                                          CAMERADAE_OBJ_PATH,
                                                          g_mIntrospectionData->interfaces[0],
@@ -41,73 +52,51 @@ void SERVICE_acquired_bus_cb(GDBusConnection *p_gdus, const gchar *p_name, gpoin
                                                          NULL, //GDestroyNotify
                                                          &p_error);
     if(p_error){
-    DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("[loc:SERVICE_acquired_bus_cb]"),DLT_STRING("[fail g_dbus_connection_register_object]"),DLT_STRING(p_error->message));
+    DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("[loc:CAMERACORE_acquired_bus_cb]"),DLT_STRING("[fail g_dbus_connection_register_object]"),DLT_STRING(p_error->message));
     g_error_free(p_error);
         return;
   }
 
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_acquired_bus_cb]"),DLT_STRING("end."));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_acquired_bus_cb]"),DLT_STRING("end."));
   
   return ;
 }
 
-void SERVICE_acquired_name_cb(GDBusConnection *p_gdus, const gchar *p_name, gpointer p_data)
+void CAMERACORE_acquired_name_cb(GDBusConnection *p_gdus, const gchar *p_name, gpointer p_data)
 {
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_acquired_name_cb]"),DLT_STRING("called. p_name = "),DLT_STRING(p_name));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_acquired_name_cb]"),DLT_STRING("called. p_name = "),DLT_STRING(p_name));
   
   return ;
 }
 
-void SERVICE_lost_name_cb(GDBusConnection *p_gdus, const gchar *p_name, gpointer p_data)
+void CAMERACORE_lost_name_cb(GDBusConnection *p_gdus, const gchar *p_name, gpointer p_data)
 {
-  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:SERVICE_lost_name_cb]"),DLT_STRING("called. p_name = "),DLT_STRING(p_name));
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("[loc:CAMERACORE_lost_name_cb]"),DLT_STRING("called. p_name = "),DLT_STRING(p_name));
   
   return ;
 } 
 
 
+
+
 void command_change(){
-  void *retval;
-  pthread_t commandchange_id;
-  if( 0 != pthread_create(&commandchange_id, NULL, commandchange, NULL)){
-    DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("Failed to ctreate the thread : commandchange"));
-    return ;
-  }
-  pthread_join(commandchange_id, &retval);
-
-}
-
-
-void commandchange(*void){
-   
-  int _command_ = COMMAND_0; 
-  if(!strcmp(p_method_name,"VIDEO")){
-    g_variant_get(p_parameters, "(y)", &_command_);
-    //update the command_dbus
-    pthread_mutex_lock(&command_dbus->lock);
     
-    while(pthread_cond _wait(&command_dbus->isaccepted, &command_dbus->lock)){DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("dbus block to wiat the command accepted."));}
-    command_dbus->_command =(_command_ == COMMAND_0)?COMMAND_0:COMMAND_1
-
-    pthread_cond_signal(&command_dbus->isupdated);
-    pthread_mutex_unlock(&command_dbus->lock);
-
-    g_dbus_method_invocation_return_value(p_invocation, NULL);
-  
-  }
-  
-  if(!strcmp(p_method_name,"SNAP")){
-
-    pthread_mutex_lock(&command_dbus->lock);
+    int _command_ = 0;
     
-    while(pthread_cond _wait(&command_dbus->isaccepted, &command_dbus->lock)){DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("dbus block to wiat the command accepted."));}
-    
-    command_dbus->_command = COMMAND_2;
-
-    pthread_cond_signal(&command_dbus->isupdated);
-    pthread_mutex_unlock(&command_dbus->lock);
-
-    g_dbus_method_invocation_return_value(p_invocation, NULL);
+    DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING(" D-bus_api  start."));
+    g_variant_get(p_parameters, "(i)", &_command_);
+    if (_command_ == 1){
+      g_queue_push_tail(DbustoCommand_queue, COMMAND_VIDEO_START);
+      DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING(" push COMMAND_VIDEO_START into DbustoCommand_queue"));
+    }
+      else if(_command_ == 0){
+        g_queue_push_tail(DbustoCommand_queue, COMMAND_VIDEO_STOP );
+        DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING(" push COMMAND_VIDEO_STOP into DbustoCommand_queue"));
+      }
+  } 
+  if(!strcmp(p_method_name,"CapturePicture")){ g_mIntrospectionData 
+    g_queue_push_tail(DbustoCommand_queue, COMMAND_CAPTUREPICTURE);
+    DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING(" push COMMAND_CAPTUREPICTURE into DbustoCommand_queue"));
   }
-
+  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING("D-bus_api end. "));
 }
