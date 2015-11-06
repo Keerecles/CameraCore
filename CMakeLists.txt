@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(systemupdate)
+PROJECT(Cameradae)
 
 SET(CMAKE_INSTALL_PREFIX "/usr")
 
@@ -15,14 +15,14 @@ PKG_CHECK_MODULES(glib REQUIRED glib-2.0)
 PKG_CHECK_MODULES(gio REQUIRED gio-2.0)
 PKG_CHECK_MODULES(dbus REQUIRED dbus-1)
 PKG_CHECK_MODULES(dlog REQUIRED dlog)
-PKG_CHECK_MODULES(DLT REQUIRED automotive-dlt)
+PKG_CHECK_MODULES(gstreamer REQUIRED gstreamer-1.0)
 
 INCLUDE_DIRECTORIES(
   ${glib_INCLUDE_DIRS}
   ${gio_INCLUDE_DIRS}
   ${dbus_INCLUDE_DIRS}
   ${dlog_INCLUDE_DIRS}
-  ${DLT_INCLUDE_DIRS}
+  ${gstreamer_INCLUDE_DIRS}
  include
 )
 
@@ -86,20 +86,25 @@ MACRO(configure_and_install_pkg PKG_FILE)
     INSTALL(FILES ${PKGCONFIG_DIR}/${PKG_FILE} DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 ENDMACRO(configure_and_install_pkg)
 
-SET(TARGET_NAME systemupdate)
+SET(TARGET_NAME Cameradae)
 
 configure_and_install_pkg(systemupdate.pc)
 
-SET(SRCS src/main.c
-         src/threads.c
+SET(SRCS src/command-adapter-thread.c
+         src/dbus-api.c
+         src/fsm-thread.c
+         src/gst-pipeline-thread.c
+         src/ivos-cameradae-service.c
+         src/send-signal.c
 )
 
 ADD_EXECUTABLE(${TARGET_NAME} ${SRCS})
+
 TARGET_LINK_LIBRARIES(${TARGET_NAME}
                       ${glib_LDFLAGS}
                       ${gio_LDFLAGS}
                       ${dbus_LDFLAGS}
-                      ${DLT_LIBRARIES}
+                    
 			  -lpthread
 		      -lgcrypt 
 		      -lgpg-error

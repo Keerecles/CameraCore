@@ -1,0 +1,14 @@
+# Package Information for pkg-config
+
+prefix=
+exec_prefix=/usr
+libdir=/usr/lib
+includedir=/usr/include/
+
+Name: 
+Description: 
+Version: 
+Requires:  
+Libs: -L${libdir} 
+Cflags: -I${includedir}
+
