@@ -12,7 +12,7 @@
 #include <gst/gst.h>
 #include <dbus/dbus.h>
 #include <glib.h>
-//#include <dlt/dlt.h>
+#include <dlt/dlt.h>
 
 
 #define TIZEN_PREFIX               "org.tizen"
@@ -71,5 +71,3 @@ void CAMERACORE_lost_name_cb(GDBusConnection *p_gdus, const gchar *p_name, gpoin
 void CAMERACORE_Send_Signal(const gchar *method_name, int result);
 
 int CAMERACORE_State_Accept();
-
-void CAMERACORE_command_change(GVariant *parameters);

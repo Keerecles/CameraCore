@@ -14,14 +14,16 @@ find_package(PkgConfig)
 PKG_CHECK_MODULES(glib REQUIRED glib-2.0)
 PKG_CHECK_MODULES(gio REQUIRED gio-2.0)
 PKG_CHECK_MODULES(dbus REQUIRED dbus-1)
-PKG_CHECK_MODULES(dlog REQUIRED dlog)
+# PKG_CHECK_MODULES(dlog REQUIRED dlog)
+PKG_CHECK_MODULES(DLT REQUIRED automotive-dlt)
 PKG_CHECK_MODULES(gstreamer REQUIRED gstreamer-1.0)
 
 INCLUDE_DIRECTORIES(
   ${glib_INCLUDE_DIRS}
   ${gio_INCLUDE_DIRS}
   ${dbus_INCLUDE_DIRS}
-  ${dlog_INCLUDE_DIRS}
+ # ${dlog_INCLUDE_DIRS}
+  ${DLT_INCLUDE_DIRS}
   ${gstreamer_INCLUDE_DIRS}
  include
 )
@@ -104,7 +106,7 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME}
                       ${glib_LDFLAGS}
                       ${gio_LDFLAGS}
                       ${dbus_LDFLAGS}
-                    
+                      ${DLT_LIBRARIES}
 			  -lpthread
 		      -lgcrypt 
 		      -lgpg-error

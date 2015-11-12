@@ -4,7 +4,7 @@
 extern GQueue *FSMtoGst_queue ;
 extern GQueue *SingaltoDbus_queue ;
 
-//DLT_IMPORT_CONTEXT(Camera_Daemon);
+DLT_IMPORT_CONTEXT(Camera_Daemon);
 
 int CAMERACORE_State_Accept(){
     
@@ -15,8 +15,8 @@ int CAMERACORE_State_Accept(){
 
     _pipeline_tate_t = g_queue_pop_head(FSMtoGst_queue);
     
-    //DLT_LOG(Camera_Daemon, DLT_LOG_INFO, DLT_STRING("Thread Gstreamer_Pipeline : CAMERACORE_State_Accept FINISH!"));
-    syslog(LOG_INFO,"Thread Gstreamer_Pipeline : CAMERACORE_State_Accept FINISH!/n",argv[0]);
+    DLT_LOG(Camera_Daemon, DLT_LOG_INFO, DLT_STRING("Gstreamer_Pipeline end!"));
+
     return _pipeline_tate_t;
 }
 
@@ -31,9 +31,7 @@ void CAMERACORE_Send_Signal(const gchar *method_name, int result){
     
     g_queue_push_tail(SingaltoDbus_queue, _signal);
   
-  //  DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING(" Signal has been send to signalthread."));
-    syslog(LOG_INFO,"Thread Gstreamer_Pipeline : CAMERACORE_Send_Signal has send the signal to d-bus/n",argv[0]);
-  
+    DLT_LOG(Camera_Daemon,DLT_LOG_INFO,DLT_STRING(" Signal has been send to signalthread."));
 }
 
 void *Gstreamer_Pipeline(void*){
@@ -154,5 +152,5 @@ void *Gstreamer_Pipeline(void*){
   gst_object_unref (bus);
   gst_element_set_state (pipeline, GST_STATE_NULL);
   gst_object_unref (pipeline);
-  
+  closelog();
 }
