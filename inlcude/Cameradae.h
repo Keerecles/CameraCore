@@ -21,14 +21,14 @@
 #define CAMERADAE_OBJ_PATH         "/"
 
 #define CAMERADAE_INTERFACE_XML                                    \
-    "<node>"                                                    \
+    "<node>"                                                       \
     "  <interface name='" CAMERADAE_IFACE "'>"                     \
-    "    <method name='OpenCamera'>"                                \
-    "      <arg type='i' name='Status' direction='out'/>"
-    "    </method>"                                             \
-    "    <method name='CapturePicture'>"                               \
-    "    </method>"                                             \
-    "  </interface>"                                            \
+    "    <method name='OpenCamera'>"                               \
+    "      <arg type='i' name='Status' direction='out'/>"          \
+    "    </method>"                                                \
+    "    <method name='CapturePicture'>"                           \
+    "    </method>"                                                \
+    "  </interface>"                                               \
     "</node>"
         
 
