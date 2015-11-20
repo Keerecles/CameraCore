@@ -107,6 +107,10 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME}
                       ${gio_LDFLAGS}
                       ${dbus_LDFLAGS}
                       ${DLT_LIBRARIES}
+                      /usr/lib/gstreamer-1.0/
+                      /usr/libgstreamer-1.0.so
+                      /usr/libgstreamer-1.0.so.0
+                      /usr/libgstreamer-1.0.so.0.204.0
 			  -lpthread
 		      -lgcrypt 
 		      -lgpg-error

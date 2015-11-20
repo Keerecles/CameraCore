@@ -16,8 +16,8 @@
 
 
 #define TIZEN_PREFIX               "org.tizen"
-#define CAMERADAE_SERVICE          TIZEN_PREFIX ".cameradaemon"
-#define CAMERADAE_IFACE            CAMERADAE_SERVICE ".Cameradaemon"
+#define CAMERADAE_SERVICE          TIZEN_PREFIX ".camera"
+#define CAMERADAE_IFACE            TIZEN_PREFIX ".Camera"
 #define CAMERADAE_OBJ_PATH         "/"
 
 #define CAMERADAE_INTERFACE_XML                                    \
@@ -49,7 +49,7 @@
 typedef struct
 {
   gchar *signalname;
-  GVariant *result;
+  int *result;
 
 }SignaltoDbus;
 
@@ -71,3 +71,5 @@ void CAMERACORE_lost_name_cb(GDBusConnection *p_gdus, const gchar *p_name, gpoin
 void CAMERACORE_Send_Signal(const gchar *method_name, int result);
 
 int CAMERACORE_State_Accept();
+
+void CAMERACORE_log(FILE *file, char *log_);
