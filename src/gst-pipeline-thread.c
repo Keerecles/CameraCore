@@ -60,14 +60,24 @@ void *Gstreamer_Pipeline(void* v){
   pic_enc_format = gst_element_factory_make ("jpegenc", "pic_enc_format");
   pic_file_sink = gst_element_factory_make ("filesink", "pic_file_sink");
   
-  /* Create the empty pipeline */
-  pipeline = gst_pipeline_new ("VehicleTravlingDataRecoderTest-pipeline");
+  if (!pipeline){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element pipeline]\n");}
+  if (!tee){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element tee]\n");}
+  if (!video_queue){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element vpu_enc]\n");}
+  if (!vpu_enc){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element pipeline]\n");}
+  if (!rtp_h264){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element rtp_h264]\n");}
+  if (!udp_sink){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element udp_sink]\n");}
+  if (!snapshot_queue){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element snapshot_queue]\n");}
+  if (!pic_enc_format){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element pic_enc_format]\n");}
+  if (!pic_file_sink){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element pic_file_sink]\n");}
    
   if (!pipeline || !video_source || !tee || !video_queue || !vpu_enc || !rtp_h264 || !udp_sink || !snapshot_queue || !pic_enc_format || !pic_file_sink) {
     //g_printerr ("Not all elements could be created.\n");
     CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Not all elements could be created.]\n");
   }
-   
+
+   /* Create the empty pipeline */
+  pipeline = gst_pipeline_new ("VehicleTravlingDataRecoderTest-pipeline");
+  
   /* Configure elements */
   g_object_set (rtp_h264, "pt", 96, NULL);
   g_object_set (udp_sink, "host", "127.0.0.1", "port", 8004, NULL);  

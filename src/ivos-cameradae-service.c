@@ -93,37 +93,32 @@ int main(int argc, char *argv[]) {
 
   //Create the threads
   if( 0 != pthread_create(&gstPipeline, NULL, Gstreamer_Pipeline, NULL)){
-    CAMERACORE_log(fp,"[CAMERACORE_log]:In main: [Failed to ctreate the thread : Gstreamer_Pipeline]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: main() [Failed to ctreate the thread : Gstreamer_Pipeline]\n");
     //DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("Failed to ctreate the thread : Gstreamer_Pipeline"));
     return -1;
   }
   if( 0 != pthread_create(&commandAdapter, NULL, Command_Adapter, NULL)){
-    CAMERACORE_log(fp,"[CAMERACORE_log]:In main: [Failed to ctreate the thread : Command_Adapter]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: main() [Failed to ctreate the thread : Command_Adapter]\n");
     //DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("Failed to ctreate the thread : Command_Adapter"));
     return -1;
   }
   if( 0 != pthread_create(&fsm, NULL, FSM, NULL)){
-    CAMERACORE_log(fp,"[CAMERACORE_log]:In main: [Failed to ctreate the thread : FSM]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: main() [Failed to ctreate the thread : FSM]\n");
     //DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("Failed to ctreate the thread : FSM"));
     return -1;
   }
   if( 0 != pthread_create(&sendsignal, NULL, Send_Signal, NULL)){
-    CAMERACORE_log(fp,"[CAMERACORE_log]:In main: [Failed to ctreate the thread : Send_Signal]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: main() [Failed to ctreate the thread : Send_Signal]\n");
     //DLT_LOG(Camera_Daemon,DLT_LOG_ERROR,DLT_STRING("Failed to ctreate the thread : Send_Signal"));
     return -1;
   }
 
-  
-  /*wait the end of the threads */
-  pthread_join(gstPipeline, &retval);
-  pthread_join(commandAdapter, &retval);
-  pthread_join(fsm, &retval);
-  pthread_join(sendsignal, &retval);
+
 
 
   p_loop = g_main_loop_new(NULL, TRUE);
   if(!p_loop) {
-    CAMERACORE_log(fp,"[CAMERACORE_log]:In main [Failed to create GMainLoop]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: main() [Failed to create GMainLoop]\n");
     
     //DLT_LOG(OTACON1,DLT_LOG_ERROR,DLT_STRING("IVOS_CAMERACORE Failed to create GMainLoop"));
         return -2;
