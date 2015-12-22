@@ -72,8 +72,9 @@ int main(int argc, char *argv[]) {
             CAMERACORE_log(fp,"Get Device Error\n"); //there was an error  
             return 1;  
         }  
-        CAMERACORE_log(fp,"%d Devices in list.\n");
-        CAMERACORE_log(fp,cnt);  
+        CAMERACORE_log(fp,cnt);
+        CAMERACORE_log(fp," Devices in list.\n");
+          
       
         
         dev_handle = libusb_open_device_with_vid_pid(ctx, VID, PID); //these are vendorID and productID I found for my usb device  
