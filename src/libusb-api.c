@@ -1,53 +1,77 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <pthread.h>
-#include <errno.h>
-#include <libusb-1.0/libusb.h>
-#include "Cameradae.h" 
-
-// First, use "lsusb" see vid and pid.  
-// there is my printer(hp deskjet 1010) vid and pid.  
-#define VID 0x18d1  
-#define PID 0x4e26 
+#include "cameradae.h"
+#include "libusb_api.h"
 
 
+int Cameracore_
 
-static int device_satus(libusb_device_handle *hd)  
-    {  
-      
-        int interface = 0;  
-        unsigned char byte;  
-        libusb_control_transfer(hd, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,  
-                LIBUSB_REQUEST_CLEAR_FEATURE,  
-                0,  
-                interface,  
-                &byte, 1, 5000);  
-      
-        CAMERACORE_log(fp,"status:");  
-        CAMERACORE_log(fp,byte);
+void SubmitControlTransfer(ControlTransferSequenceState* sequence_state) {
+  
+  UsbControlTransfer* transfer = sequence_state->CurrentTransfer();
+  if (NULL == transfer) {
+    LOG4CXX_TRACE(logger_, "exit. Condition: NULL == transfer");
+    return;
+  }
 
-    /** 
-     * byte 
-     * normal:0x18 
-     * other :0x10 
-     */  
-        return 0;  
-    }  
+  libusb_transfer* libusb_transfer = libusb_alloc_transfer(0);
+  if (0 == libusb_transfer) {
+    LOG4CXX_ERROR(logger_, "libusb_alloc_transfer failed");
+    sequence_state->Finish();
+    LOG4CXX_TRACE(logger_, "exit. Condition: 0 == libusb_transfer");
+    return;
+  }
 
-uint16_t libusbapi_get_VID()  { 
- }
-uint16_t libusbapi_get_PID()  { 
- }
+  
+  const libusb_request_type request_type = LIBUSB_REQUEST_TYPE_VENDOR;
+
+  libusb_endpoint_direction endpoint_direction = LIBUSB_ENDPOINT_IN;
+
+  if (transfer->Direction() == UsbControlTransfer::IN) {
+    endpoint_direction = LIBUSB_ENDPOINT_IN;
+  } 
+  else if (transfer->Direction() == UsbControlTransfer::OUT) {
+    endpoint_direction = LIBUSB_ENDPOINT_OUT;
+  } 
+  else {
+    NOTREACHED();
+  }
+
+  const uint8_t request = transfer->Request();
+  const uint16_t value = transfer->Value();
+  const uint16_t index = transfer->Index();
+  const uint16_t length = transfer->Length();
+
+  unsigned char* buffer = static_cast<unsigned char*>(malloc(length + LIBUSB_CONTROL_SETUP_SIZE));
+  if (NULL == buffer) {
+    LOG4CXX_ERROR(logger_, "buffer allocation failed");
+    libusb_free_transfer(libusb_transfer);
+    sequence_state->Finish();
+    LOG4CXX_TRACE(logger_, "exit. Condition: NULL == buffer");
+    return;
+  }
+
+  libusb_fill_control_setup(buffer, request_type | endpoint_direction, request,
+                            value, index, length);
+
+  if (0 != length && endpoint_direction == LIBUSB_ENDPOINT_OUT) {
+    const char* data = static_cast<UsbControlOutTransfer*>(transfer)->Data();
+    memcpy(buffer + LIBUSB_CONTROL_SETUP_SIZE, data, length);
+  }
+  libusb_fill_control_transfer(
+    libusb_transfer, sequence_state->device()->GetLibusbHandle(), buffer,
+    UsbTransferSequenceCallback, sequence_state, 0);
+  libusb_transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER;
+
+  const int libusb_ret = libusb_submit_transfer(libusb_transfer);
+  if (LIBUSB_SUCCESS != libusb_ret) {
+    LOG4CXX_ERROR(logger_, "libusb_submit_transfer failed: "
+                  << libusb_error_name(libusb_ret));
+    libusb_free_transfer(libusb_transfer);
+    sequence_state->Finish();
+  }
+  LOG4CXX_TRACE(logger_, "exit");
+}
 
 
-
-int main(int argc, char *argv[]) {
  	libusb_device **devs; //pointer to pointer of device, used to retrieve a list of devices  
     libusb_device_handle *dev_handle; //a device handle  
     libusb_context *ctx = NULL; //a libusb session  
@@ -106,4 +130,35 @@ int main(int argc, char *argv[]) {
       
         return 0; 
 
+
+
+
+
+
+TransportAdapter::Error UsbHandler::Init() {
+  
+  int libusb_ret = libusb_init(&libusb_context_);
+
+  
+  libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG);
+
+  libusb_ret = libusb_hotplug_register_callback(
+                 libusb_context_, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
+                 LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY,
+                 LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, ArrivedCallback, this,
+                 &arrived_callback_handle_);
+
+
+  libusb_ret = libusb_hotplug_register_callback(
+                 libusb_context_, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                 static_cast<libusb_hotplug_flag>(0), LIBUSB_HOTPLUG_MATCH_ANY,
+                 LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LeftCallback, this,
+                 &left_callback_handle_);
+
+
+  thread_->start();
+ 
 }
+
+
+

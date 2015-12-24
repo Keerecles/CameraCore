@@ -1,0 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <pthread.h>
+#include <errno.h>
+#include <libusb-1.0/libusb.h>
+#include "Cameradae.h" 
