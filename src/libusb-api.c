@@ -303,5 +303,28 @@ int CAMERACORE_libusb_DeviceConnect(){
   usb endpoint分配等等 
   */
 
+  if (!FindEndpoints()) {
+    LOG4CXX_ERROR(logger_, "EndPoints was not found");
+    LOG4CXX_TRACE(logger_, "exit with FALSE. Condition: !FindEndpoints()");
+    return false;
+  }
+  in_buffer_ = new unsigned char[in_endpoint_max_packet_size_];
+  in_transfer_ = libusb_alloc_transfer(0);
+  if (NULL == in_transfer_) {
+    LOG4CXX_ERROR(logger_, "libusb_alloc_transfer failed");
+    LOG4CXX_TRACE(logger_, "exit with FALSE. Condition: NULL == in_transfer_");
+    return false;
+  }
 
+  controller_->ConnectDone(device_uid_, app_handle_);
+  if (!PostInTransfer()) {
+    LOG4CXX_ERROR(logger_, "PostInTransfer failed. Call ConnectionAborted");
+    controller_->ConnectionAborted(device_uid_, app_handle_,
+                                   CommunicationError());
+    LOG4CXX_TRACE(logger_, "exit with FALSE. Condition: !PostInTransfer()");
+    return false;
+  }
+
+  LOG4CXX_TRACE(logger_, "exit with TRUE");
+  return true;
 }
