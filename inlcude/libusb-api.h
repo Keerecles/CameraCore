@@ -13,6 +13,8 @@
 #include "Cameradae.h" 
 
 
+#defined in_endpoint_max_packet_size   2764800;  //The sise of one frame of 720P video is 2764800Byte
+#defined out_endpoint_max_packet_size  2764800;
 
 struct Device
 {
@@ -25,14 +27,11 @@ struct Device
   libusb_device* libusb_device_;
 };
 
-int CAMERACORE_libusb_init();
-int CAMERACORE_libusb_hotplug_detect();
-int CAMERACORE_libusb_hotplug_cb();
-int CAMERACORE_libusb_device_info();
-int CAMERACORE_libusb_device_access();
-int CAMERACORE_libusb_device_mode();
-int CAMERACORE_libusb_update_deviceList();
-int CAMERACORE_libusb_device_connect();
-int CAMERACORE_libusb_data_feed();
-int CAMERACORE_libusb_transfer();
-int CAMERACORE_libusb_transfer_cb();
+
+
+
+
+
+
+
+
