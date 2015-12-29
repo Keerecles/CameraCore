@@ -10,10 +10,10 @@
 #include <errno.h>
 #include <gst/gst.h>
 #include <dbus/dbus.h>
-#include "Cameradae.h" 
 #include <gst/video/video.h>
 #include <gst/app/gstappsink.h>
- 
+#include "libusb_api.h"
+#include "Cameradae.h" 
 
 FILE *fp; 
 /* The appsink has received a buffer */

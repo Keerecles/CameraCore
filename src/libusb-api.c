@@ -15,7 +15,7 @@ int CAMERACORE_libusb_init(){
   int libusb_ret = libusb_init(&libusb_context_);
 
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [libusb_init failed: ");
+    CAMERACORE_log(fp, "[ AMERACORE_log]:CAMERACORE_libusb_init [libusb_init failed: ");
     CAMERACORE_log(fp, libusb_ret);
     CAMERACORE_log(fp, "]");
     return -1;
@@ -187,6 +187,7 @@ int DeviceLifed(libusb_device* device_libusb){
 
 libusb_hotplug_callback_handle HotplugArrivedCallbackHandle(){}
 libusb_hotplug_callback_handle HotplugLeftCallbackHandle(){}
+
 int TurnIntoAccessoryMode(device){
   //留作其他设备接口
 }
@@ -356,7 +357,7 @@ bool PostOutTransfer() {
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_submit_transfer failed:] ");
     CAMERACORE_log(fp,libusb_error_name(libusb_ret));
-    CAMERACORE_log(fp,"Abort connection.]");
+    CAMERACORE_log(fp,"[CAMERACORE_log]:PostOutTransfer [Abort connection]");
 
     AbortConnection();
     return false;
@@ -461,7 +462,7 @@ int CAMERACORE_libusb_getUsbDeviceInfo( struct Device& device,
 
   const uint8_t bus_number = libusb_get_bus_number(device_libusb);
   const uint8_t device_address = libusb_get_device_address(device_libusb);
-  
+
 }
 
 int CAMERACORE_libusb_SendData(){
