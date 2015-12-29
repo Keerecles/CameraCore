@@ -12,7 +12,7 @@
 #include <gst/gst.h>
 #include <dbus/dbus.h>
 #include <glib.h>
-#include <dlt/dlt.h>
+//#include <dlt/dlt.h>
 
 
 #define TIZEN_PREFIX               "org.tizen"
@@ -46,12 +46,11 @@
 #define SIGNAL_CAPTUREPICTURE_SUCCESSFUL   1     
 #define SIGNAL_CAPTUREPICTURE_FAILED      -1     
 
-typedef struct
-{
-  gchar *signalname;
-  int *result;
+// struct{
+//   gchar *signalname;
+//   int *result;
 
-}SignaltoDbus;
+// }SignaltoDbus;
 
 void CAMERACORE_gst_method_call(  GDBusConnection       *connection,
                                   const gchar           *p_sender,

@@ -10,10 +10,10 @@
 #include <errno.h>
 #include <gst/gst.h>
 #include <dbus/dbus.h>
-#include "Cameradae.h" 
 #include <gst/video/video.h>
 #include <gst/app/gstappsink.h>
- 
+#include "libusb-api.h"
+#include "cameradae.h" 
 
 FILE *fp; 
 /* The appsink has received a buffer */
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
    
   /* Create the elements */
   video_source = gst_element_factory_make ("imxv4l2src", "video_source");
-  video_queue = gst_e lement_factory_make ("queue", "video_queue");
+  video_queue = gst_element_factory_make ("queue", "video_queue");
   vpu_enc = gst_element_factory_make ("vpuenc", "vpu_enc");
   video_app_sink = gst_element_factory_make ("appsink", "video_app_sink");
   /* Create the empty pipeline */

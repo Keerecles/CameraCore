@@ -15,7 +15,7 @@ PKG_CHECK_MODULES(glib REQUIRED glib-2.0)
 PKG_CHECK_MODULES(gio REQUIRED gio-2.0)
 PKG_CHECK_MODULES(dbus REQUIRED dbus-1)
 # PKG_CHECK_MODULES(dlog REQUIRED dlog)
-PKG_CHECK_MODULES(DLT REQUIRED automotive-dlt)
+#PKG_CHECK_MODULES(DLT REQUIRED automotive-dlt)
 PKG_CHECK_MODULES(gstreamer REQUIRED gstreamer-1.0)
 
 INCLUDE_DIRECTORIES(
@@ -23,7 +23,7 @@ INCLUDE_DIRECTORIES(
   ${gio_INCLUDE_DIRS}
   ${dbus_INCLUDE_DIRS}
  # ${dlog_INCLUDE_DIRS}
-  ${DLT_INCLUDE_DIRS}
+ # ${DLT_INCLUDE_DIRS}
   ${gstreamer_INCLUDE_DIRS}
  include
 )
@@ -92,12 +92,10 @@ SET(TARGET_NAME Cameradae)
 
 configure_and_install_pkg(systemupdate.pc)
 
-SET(SRCS src/command-adapter-thread.c
-         src/dbus-api.c
-         src/fsm-thread.c
-         src/gst-pipeline-thread.c
-         src/ivos-cameradae-service.c
-         src/send-signal.c
+SET(SRCS src/ivos-cameradae-service.c
+         src/libusb-api.c
+         #src/libusb-api.cc
+         
 )
 
 ADD_EXECUTABLE(${TARGET_NAME} ${SRCS})
@@ -106,8 +104,8 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME}
                       ${glib_LDFLAGS}
                       ${gio_LDFLAGS}
                       ${dbus_LDFLAGS}
-                      ${DLT_LIBRARIES}
-                      
+                     # ${DLT_LIBRARIES}
+        -libusb-1.0
         -lgstreamer-1.0
         -lgstvideo-1.0
 			  -lpthread
