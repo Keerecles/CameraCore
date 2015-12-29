@@ -93,11 +93,8 @@ SET(TARGET_NAME Cameradae)
 configure_and_install_pkg(systemupdate.pc)
 
 SET(SRCS src/command-adapter-thread.c
-         src/dbus-api.c
-         src/fsm-thread.c
-         src/gst-pipeline-thread.c
-         src/ivos-cameradae-service.c
-         src/send-signal.c
+         src/libusb-api.c
+         
 )
 
 ADD_EXECUTABLE(${TARGET_NAME} ${SRCS})
@@ -107,7 +104,7 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME}
                       ${gio_LDFLAGS}
                       ${dbus_LDFLAGS}
                       ${DLT_LIBRARIES}
-                      
+        -libusb-1.0
         -lgstreamer-1.0
         -lgstvideo-1.0
 			  -lpthread
