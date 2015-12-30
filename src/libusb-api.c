@@ -89,7 +89,8 @@ int HotplugDeviceLifedCallback(   libusb_context* context,
   /**********
   数据 参数转换    
   *************/
-  DeviceLifed(device_libusb,device_handle_libusb);
+  struct Device* device = static_cast<struct Device*>(data);
+  DeviceLifed(device);
 
 }
 
@@ -171,7 +172,7 @@ int OnDeviceArrived(struct Device* device){
     /*
       多设备的处理 buffer分配 endpoint的分配
     */
-    DeviceConnect();
+    DeviceConnect(device);
 }
 
 
@@ -205,7 +206,7 @@ int IsGoogleAccessory(const struct Device* device) {
 
 
 int IsAppleDevice(const struct Device* device) {
-  return (kAppleVid == device->vendor_id &&
+  return (kAppleVid == device->vendor_id) &&
     ((kApplePid1 == device->product_id) ||
      (kApplePid2 == device->product_id) ||
      (kApplePid3 == device->product_id) ||
@@ -264,7 +265,7 @@ int OnDeviceListUpdated(){
     CAMERACORE_log(fp, "[CAMERACORE_log]:OnDeviceListUpdated [Inform the higher level to aquire the respond]");
 }
 
-int DeviceConnect(){
+int DeviceConnect(struct Device* device){
   /*
   (1)多台设备的连接判断
   (2)usb endpoint分配等等 
@@ -368,7 +369,7 @@ int PostInTransfer(libusb_device_handle* device_handle_libusb){
 
   libusb_fill_bulk_transfer(in_transfer, device_handle_libusb, in_endpoint,
                             in_buffer, in_endpoint_max_packet_size,
-                            InTransferCallback, this, 0);
+                            InTransferCallback, NULL, 0);
   const int libusb_ret = libusb_submit_transfer(in_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostInTransfer [libusb_submit_transfer failed: ");

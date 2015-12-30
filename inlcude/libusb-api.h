@@ -60,10 +60,7 @@ int HotplugDeviceLifedCallback(   libusb_context* context,
 int DeviceArrived(  struct Device* device);
 int OnDeviceArrived(struct Device* device);
 
-int DeviceLifed(  libusb_device* 
-                  device_libusb,
-                  libusb_device_handle* 
-                  device_handle_libusb);
+int DeviceLifed(  struct Device* device);
 
 int TurnIntoAccessoryMode(struct Device* device);
 

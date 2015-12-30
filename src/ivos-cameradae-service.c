@@ -23,10 +23,15 @@ static void new_sample (GstElement *sink) {
   /* Retrieve the buffer */
   g_signal_emit_by_name (sink, "push-sample", &sample);
   if (sample) {
-    /* The only thing we do in this example is print a * to indicate a received buffer */
-    
-    //我们可以用GstBuffer的GST_BUFFER_DATA宏来获得数据指针和用GST_BUFFER_SIZE宏来获得数据大小。
+    /* 我们可以用GstBuffer的GST_BUFFER_DATA宏来获得数据指针和用GST_BUFFER_SIZE宏来获得数据大小。 
+       结合usb in_buffer 的设置，将数据传输的节点设置好，
+       然后调用libusb的CAMERACORE_libusb_SendData() 进行数据传输
+    */
     CAMERACORE_log(fp,"*******************");
+
+
+
+
     
     gst_sample_unref (sample);
   }
