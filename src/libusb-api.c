@@ -282,7 +282,7 @@ int DeviceConnect(struct Device* device){
 
 
   if (!FindEndpoints()) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [EndPoints was not found]");
+    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [Device cannt connect because endPoints was not found]");
     return -1;
   }
 
