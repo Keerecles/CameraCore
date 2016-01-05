@@ -16,11 +16,8 @@
 
 
 extern FILE *fp; 
-libusb_context* libusb_context_cameracore;
-libusb_device_handle* device_handle_libusb;
+
 struct Device* cameracore_usb_device;
-uint8_t in_endpoint;
-uint8_t out_endpoint;
 char in_buffer[1000];
 char out_buffer[1000];
 libusb_hotplug_callback_handle HotplugArrivedCallbackHandle;
@@ -30,6 +27,10 @@ libusb_hotplug_callback_handle HotplugLeftCallbackHandle;
 int CAMERACORE_libusb_init(struct Device* device){
   
   int libusb_ret = libusb_init(&libusb_context_cameracore);
+
+  /*init the endpoint*/
+  device->in_endpoint = 0 ;
+  device->out_endpoint = 0;
 
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[ AMERACORE_log]:CAMERACORE_libusb_init [libusb_init failed: ]");
@@ -76,10 +77,33 @@ int HotplugDeviceArrivedCallback( libusb_context* context,
   CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [libusb_hotplug_register_callback failed: ");
  
   //获取热插拔传递的device地址
-  struct Device* device = static_cast<struct Device*>(data);
-  DeviceArrived(device);
-  return 0;
+  struct Device* device =<struct Device*>(data);
+  // discover devices  获取热插拔传递的device
+  struct libusb_device **list;
+  int cnt = libusb_get_device_list(device->libusb_context_cameracore, &list);
+  int i = 0;
+  int err = 0;
+  if (cnt < 0){
+    CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [Getting device list failed] ");
   }
+  for (i = 0; i < cnt; i++) {
+      libusb_device *dev = list[i];
+      if (is_interesting(dev)) {
+          device->device_libusb =dev;
+          DeviceArrived(device);
+          break;
+      }
+  }
+  libusb_free_device_list(list, 1);
+  return 0;
+
+}
+
+
+
+int is_interesting(struct Device* device){
+
+}
 
 int HotplugDeviceLifedCallback(   libusb_context* context, 
                                   libusb_device* device_libusb, 
@@ -89,9 +113,8 @@ int HotplugDeviceLifedCallback(   libusb_context* context,
   /**********
   数据 参数转换    
   *************/
-  struct Device* device = static_cast<struct Device*>(data);
+  struct Device* device = <struct Device*>(data);
   DeviceLifed(device);
-
 }
 
 
@@ -281,7 +304,7 @@ int DeviceConnect(struct Device* device){
  
 
 
-  if (!FindEndpoints()) {
+  if (!FindEndpoints(device)) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [Device cannt connect because endPoints was not found]");
     return -1;
   }
@@ -295,13 +318,12 @@ int DeviceConnect(struct Device* device){
 }
 
 
-int FindEndpoints(){
+int FindEndpoints(struct Device* device){
 
   struct libusb_config_descriptor* config;
-  const int libusb_ret = libusb_get_active_config_descriptor(libusb_device_, &config);
+  const int libusb_ret = libusb_get_active_config_descriptor(device->device_libusb, &config);
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:libusb_get_active_config_descriptor failed: ");
-    CAMERACORE_log(fp, "[CAMERACORE_log]:exit with -1. Condition: LIBUSB_SUCCESS != libusb_ret");
     return -1;
   }
 
@@ -309,21 +331,20 @@ int FindEndpoints(){
   int find_out_endpoint = 1;
 
   for (int i = 0; i < (config->bNumInterfaces); ++i) {
-    const libusb_interface& interface = config->interface[i];
+    const struct libusb_interface& interface = config->interface[i];
     for (int i = 0; i < interface.num_altsetting; ++i) {
-      const libusb_interface_descriptor& iface_desc = interface.altsetting[i];
+      const struct libusb_interface_descriptor& iface_desc = interface.altsetting[i];
       for (int i = 0; i < iface_desc.bNumEndpoints; ++i) {
-        const libusb_endpoint_descriptor& endpoint_desc =
-          iface_desc.endpoint[i];
+        const struct libusb_endpoint_descriptor& endpoint_desc = iface_desc.endpoint[i];
 
         const uint8_t endpoint_dir =
           endpoint_desc.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
         if (find_in_endpoint && endpoint_dir == LIBUSB_ENDPOINT_IN) {
-          in_endpoint = endpoint_desc.bEndpointAddress;
+          device->in_endpoint = endpoint_desc.bEndpointAddress;
           in_endpoint_max_packet_size = endpoint_desc.wMaxPacketSize;
           find_in_endpoint = -1;
         } else if (find_out_endpoint && endpoint_dir == LIBUSB_ENDPOINT_OUT) {
-          out_endpoint = endpoint_desc.bEndpointAddress;
+          device->out_endpoint = endpoint_desc.bEndpointAddress;
           out_endpoint_max_packet_size = endpoint_desc.wMaxPacketSize;
           find_out_endpoint = -1;
         }
