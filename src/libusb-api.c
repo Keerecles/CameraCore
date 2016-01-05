@@ -54,7 +54,7 @@ int CAMERACORE_libusb_init(struct Device* device){
 
   libusb_ret = libusb_hotplug_register_callback(
                  device->libusb_context_cameracore, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                 static_cast<libusb_hotplug_flag>(0), LIBUSB_HOTPLUG_MATCH_ANY,
+                 LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY,
                  LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, HotplugDeviceLifedCallback, device,
                  &HotplugLeftCallbackHandle);
 
@@ -315,33 +315,41 @@ int DeviceConnect(struct Device* device){
 int FindEndpoints(struct Device* device){
 
   struct libusb_config_descriptor* config;
+  const struct libusb_interface* interface;
+  const struct libusb_interface_descriptor* iface_desc;
+  const struct libusb_endpoint_descriptor* endpoint_desc;
+  int find_in_endpoint = 1;
+  int find_out_endpoint = 1;
+  int i,k,j;
+  
   const int libusb_ret = libusb_get_active_config_descriptor(device->device_libusb, &config);
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:libusb_get_active_config_descriptor failed: ");
     return -1;
   }
-
-  int find_in_endpoint = 1;
-  int find_out_endpoint = 1;
-
-  for (int i = 0; i < (config->bNumInterfaces); ++i) {
-    const struct libusb_interface& interface = config->interface[i];
-    for (int i = 0; i < interface.num_altsetting; ++i) {
-      const struct libusb_interface_descriptor& iface_desc = interface.altsetting[i];
-      for (int i = 0; i < iface_desc.bNumEndpoints; ++i) {
-        const struct libusb_endpoint_descriptor& endpoint_desc = iface_desc.endpoint[i];
+  
+  for (i = 0; i < (config->bNumInterfaces); ++i) {
+    interface = config->interface[i];
+    
+    for (j = 0; j < interface->num_altsetting; ++j) {
+      iface_desc = interface->altsetting[j];
+      
+      for (k = 0; k < iface_desc->bNumEndpoints; ++k) {
+        endpoint_desc = iface_desc->endpoint[k];
 
         const uint8_t endpoint_dir =
-          endpoint_desc.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
+          endpoint_desc->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
+        
         if (find_in_endpoint && endpoint_dir == LIBUSB_ENDPOINT_IN) {
-          device->in_endpoint = endpoint_desc.bEndpointAddress;
-          in_endpoint_max_packet_size = endpoint_desc.wMaxPacketSize;
+          device->in_endpoint = endpoint_desc->bEndpointAddress;
+          device->in_endpoint_max_packet_size = endpoint_desc->wMaxPacketSize;
           find_in_endpoint = -1;
-        } else if (find_out_endpoint && endpoint_dir == LIBUSB_ENDPOINT_OUT) {
-          device->out_endpoint = endpoint_desc.bEndpointAddress;
-          out_endpoint_max_packet_size = endpoint_desc.wMaxPacketSize;
-          find_out_endpoint = -1;
-        }
+        } 
+          else if (find_out_endpoint && endpoint_dir == LIBUSB_ENDPOINT_OUT) {
+              device->out_endpoint = endpoint_desc->bEndpointAddress;
+              device->out_endpoint_max_packet_size = endpoint_desc->wMaxPacketSize;
+              find_out_endpoint = -1;
+          }
       }
     }
   }
@@ -359,11 +367,11 @@ int PostOutTransfer(struct Device * device) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_alloc_transfer failed]");
     return -1;
   }
-  libusb_fill_iso_transfer(out_transfer,device->device_handle_libusb,device.out_endpoint,out_buffer,
+  libusb_fill_iso_transfer(out_transfer,device->device_handle_libusb,device->out_endpoint,out_buffer,
         sizeof(out_transfer), 16,OutTransferCallback, NULL, 0);
-  libusb_set_iso_packet_lengths(in_transfer, sizeof(in_buffer)/16);
+  libusb_set_iso_packet_lengths(out_transfer, sizeof(out_buffer)/16);
 
-  const int libusb_ret = libusb_submit_transfer(in_transfer);
+  const int libusb_ret = libusb_submit_transfer(out_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_submit_transfer failed:] ");
     // CAMERACORE_log(fp,libusb_error_name(libusb_ret));
@@ -375,16 +383,16 @@ int PostOutTransfer(struct Device * device) {
   return 1;
 }
 
-int PostInTransfer(libusb_device_handle* device_handle_libusb){
+int PostInTransfer(struct Device * device){
 
-  in_transfer = libusb_alloc_transfer(0);
+  libusb_transfer* in_transfer = libusb_alloc_transfer(0);
   if (NULL == in_transfer) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [libusb_alloc_transfer failed]");
     return -1;
   }
 
-  libusb_fill_bulk_transfer(in_transfer, device_handle_libusb, in_endpoint,
-                            in_buffer, in_endpoint_max_packet_size,
+  libusb_fill_bulk_transfer(in_transfer, device->device_handle_libusb, device->in_endpoint,
+                            in_buffer, device->in_endpoint_max_packet_size,
                             InTransferCallback, NULL, 0);
   const int libusb_ret = libusb_submit_transfer(in_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
@@ -460,7 +468,7 @@ void OutTransferCallback(struct libusb_transfer* transfer){
 }
 
 
-int CAMERACORE_libusb_SendData(){
+int CAMERACORE_libusb_SendData(struct Device* device){
   /*
   设置buffer属性
   */

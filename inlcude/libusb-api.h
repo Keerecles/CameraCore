@@ -13,8 +13,8 @@
 #include "cameradae.h" 
 
 
-#define in_endpoint_max_packet_size		2764800  //The sise of one frame of 720P video is 2764800Byte
-#define out_endpoint_max_packet_size	2764800
+// #define in_endpoint_max_packet_size		2764800  //The sise of one frame of 720P video is 2764800Byte
+// #define out_endpoint_max_packet_size	2764800
 #define kUsbConfiguration			   	    1
 #define kAoaVid  						          0x18d1
 #define kAoaPid1  						        0x2d00
@@ -38,8 +38,11 @@ struct Device
   	uint8_t device_address;
   	uint16_t vendor_id;
   	uint16_t product_id;
-  	uint8_t in_endpoint;
-	  uint8_t out_endpoint;
+  	unsigned char in_endpoint;
+	  unsigned char out_endpoint;
+    int in_endpoint_max_packet_size;
+    int out_endpoint_max_packet_size;
+    struct libusb_context* libusb_context_cameracore;
   	struct libusb_device_descriptor* device_descriptor;
     struct libusb_device_handle* device_handle_libusb;
   	struct libusb_device* device_libusb;
@@ -80,15 +83,15 @@ int OnDeviceListUpdated();
 int DeviceConnect();
 
 int FindEndpoints();
-int PostOutTransfer(libusb_device_handle* device_handle_libusb);
+int PostOutTransfer(struct Device * device);
 
-int PostInTransfer(libusb_device_handle* device_handle_libusb);
+int PostInTransfer(struct Device * device);
 
 void InTransferCallback(struct libusb_transfer* transfer);
 
 void OutTransferCallback(struct libusb_transfer* transfer);
 
-int CAMERACORE_libusb_SendData();
+int CAMERACORE_libusb_SendData(struct Device* device);
 
 void CloseDeviceHandle(libusb_device_handle* device_handle_libusb);
 
