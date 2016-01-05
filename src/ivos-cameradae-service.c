@@ -16,8 +16,10 @@
 #include "cameradae.h" 
 
 FILE *fp; 
+extern char in_buffer[1000];
+extern char out_buffer[1000];
 /* The appsink has received a buffer */
-static void new_sample (GstElement *sink) {
+static void new_sample (GstElement *sink,struct Device * device) {
   GstSample *sample;
   
   /* Retrieve the buffer */
@@ -27,8 +29,12 @@ static void new_sample (GstElement *sink) {
        结合usb in_buffer 的设置，将数据传输的节点设置好，
        然后调用libusb的CAMERACORE_libusb_SendData() 进行数据传输
     */
-    CAMERACORE_log(fp,"*******************");
 
+
+
+       
+    CAMERACORE_log(fp,"*******************");
+    CAMERACORE_libusb_SendData(device);
 
 
 
@@ -67,7 +73,7 @@ void CAMERACORE_log(FILE *file, char *log_){
 
 int main(int argc, char *argv[]) {
   
-  gst_init(NULL,NULL);
+  
   GstElement *pipeline, *video_source;
   GstElement *video_queue, *vpu_enc,*video_app_sink; 
 
@@ -78,13 +84,14 @@ int main(int argc, char *argv[]) {
 
   GstBus *bus;
   GstMessage *msg;
-
+  struct Device usbdevice;
 
   fp = fopen("/CAMERACORE_log.txt", "a+");                      /*创建文件用于输出log*/
     if(!fp){
     return 1;
   } 
-
+  gst_init(NULL,NULL);
+  CAMERACORE_libusb_init(&usbdevice);
   
    
   /* Create the elements */
@@ -116,8 +123,8 @@ int main(int argc, char *argv[]) {
   gst_video_info_set_format (&info, GST_VIDEO_FORMAT_UNKNOWN, 1280,720);
   video_caps = gst_video_info_to_caps (&info);
 
-  g_object_set (video_app_sink, "emit-signals", TRUE, "caps", video_caps, NULL);
-  g_signal_connect (video_app_sink, "new-sample", G_CALLBACK (new_sample), NULL);
+  g_object_set (video_app_sink, "emit-signals", TRUE, "video_caps", video_caps, NULL);
+  g_signal_connect (video_app_sink, "new-sample", G_CALLBACK (new_sample), &usbdevice);
   gst_caps_unref (video_caps);
 
 
