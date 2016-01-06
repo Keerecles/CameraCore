@@ -1,17 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <pthread.h>
-#include <errno.h>
-//#include <dlt/dlt.h>
-#include <libusb-1.0/libusb.h>
-#include "cameradae.h" 
-#include "libusb-api.h"
+ #include "libusb-api.h"
 
 
 extern FILE *fp; 
@@ -67,14 +54,14 @@ int CAMERACORE_libusb_init(struct Device* device){
 }
 
 
-int HotplugDeviceArrivedCallback( libusb_context* context, 
-                                  libusb_device* device_libusb, 
+int HotplugDeviceArrivedCallback( struct libusb_context* context, 
+                                  struct libusb_device* device_libusb, 
                                   libusb_hotplug_event event, 
                                   void* data) {
   CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [libusb_hotplug_register_callback failed: ");
  
   //获取热插拔传递的device地址
-  struct Device* device =<struct Device*>(data);
+  struct Device* device =(struct Device*)(data);
   // discover devices  获取热插拔传递的device
   struct libusb_device **list;
   int cnt = libusb_get_device_list(device->libusb_context_cameracore, &list);
@@ -85,7 +72,7 @@ int HotplugDeviceArrivedCallback( libusb_context* context,
   }
   for (i = 0; i < cnt; i++) {
       libusb_device *dev = list[i];
-      if (is_interesting(dev)) {
+      if (!is_interesting(dev)) {
           device->device_libusb =dev;
           DeviceArrived(device);
           break;
@@ -98,19 +85,20 @@ int HotplugDeviceArrivedCallback( libusb_context* context,
 
 
 
-int is_interesting(struct Device* device){
-
+int is_interesting(libusb_device* device){
+    return 0;
 }
 
-int HotplugDeviceLifedCallback(   libusb_context* context, 
-                                  libusb_device* device_libusb, 
-                                  libusb_hotplug_event event, void* data){
+int HotplugDeviceLifedCallback(   struct libusb_context* context, 
+                                  struct libusb_device* device_libusb, 
+                                  libusb_hotplug_event event, 
+                                  void* data){
 
-  CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceLifedCallback [libusb_hotplug_register_callback failed: ")
+  CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceLifedCallback [libusb_hotplug_register_callback failed: ");
   /**********
   数据 参数转换    
   *************/
-  struct Device* device = <struct Device*>(data);
+  struct Device* device = (struct Device*)(data);
   DeviceLifed(device);
 }
 
@@ -196,7 +184,7 @@ int OnDeviceArrived(struct Device* device){
 }
 
 
-int DeviceLifed(  struct Device * device){
+void DeviceLifed(  struct Device * device){
 
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceLifed [Device has lifed]");
 
@@ -234,7 +222,7 @@ int IsAppleDevice(const struct Device* device) {
 }
 
 
-int GoogleDeviceHandle(struct Device* device){
+void GoogleDeviceHandle(struct Device* device){
   /*
     针对google设备的接口
   */
@@ -243,7 +231,7 @@ int GoogleDeviceHandle(struct Device* device){
 
 
 }
-int AppleDeviceHandle(struct Device* device){
+void AppleDeviceHandle(struct Device* device){
 
   /*
     针对apple设备的接口
@@ -298,10 +286,10 @@ int DeviceConnect(struct Device* device){
  
 
 
-  if (!FindEndpoints(device)) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [Device cannt connect because endPoints was not found]");
-    return -1;
-  }
+  // if (!FindEndpoints(device)) {
+  //   CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [Device cannt connect because endPoints was not found]");
+  //   return -1;
+  // }
 
    /********************************************
       向上层通知 设备链接成功，可以进行数据传输
@@ -312,57 +300,55 @@ int DeviceConnect(struct Device* device){
 }
 
 
-int FindEndpoints(struct Device* device){
+// int FindEndpoints(struct Device* device){
 
-  struct libusb_config_descriptor* config;
-  const struct libusb_interface* interface;
-  const struct libusb_interface_descriptor* iface_desc;
-  const struct libusb_endpoint_descriptor* endpoint_desc;
-  int find_in_endpoint = 1;
-  int find_out_endpoint = 1;
-  int i,k,j;
+//   struct libusb_config_descriptor* config;
+//   // const struct libusb_interface* interface;
+//   // const struct libusb_interface_descriptor* iface_desc;
+//   // const struct libusb_endpoint_descriptor* endpoint_desc;
+//   int find_in_endpoint = 1;
+//   int find_out_endpoint = 1;
+//   int i,k,j;
+//   const int endpoint_dir;
   
-  const int libusb_ret = libusb_get_active_config_descriptor(device->device_libusb, &config);
-  if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:libusb_get_active_config_descriptor failed: ");
-    return -1;
-  }
+//   const int libusb_ret = libusb_get_active_config_descriptor(device->device_libusb, &config);
+//   if (LIBUSB_SUCCESS != libusb_ret) {
+//     CAMERACORE_log(fp, "[CAMERACORE_log]:libusb_get_active_config_descriptor failed: ");
+//     return -1;
+//   }
   
-  for (i = 0; i < (config->bNumInterfaces); ++i) {
-    interface = config->interface[i];
-    
-    for (j = 0; j < interface->num_altsetting; ++j) {
-      iface_desc = interface->altsetting[j];
-      
-      for (k = 0; k < iface_desc->bNumEndpoints; ++k) {
-        endpoint_desc = iface_desc->endpoint[k];
+//     for ( i = 0; i < config->bNumInterfaces; ++i) {
+//     struct libusb_interface& interface = config->interface[i];
+//     for (j = 0; j < interface.num_altsetting; ++j) {
+//       struct libusb_interface_descriptor& iface_desc = interface.altsetting[j];
+//       for (k = 0; k < iface_desc.bNumEndpoints; ++k) {
+//         struct libusb_endpoint_descriptor& endpoint_desc =
+//           iface_desc.endpoint[k];
 
-        const uint8_t endpoint_dir =
-          endpoint_desc->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
-        
-        if (find_in_endpoint && endpoint_dir == LIBUSB_ENDPOINT_IN) {
-          device->in_endpoint = endpoint_desc->bEndpointAddress;
-          device->in_endpoint_max_packet_size = endpoint_desc->wMaxPacketSize;
-          find_in_endpoint = -1;
-        } 
-          else if (find_out_endpoint && endpoint_dir == LIBUSB_ENDPOINT_OUT) {
-              device->out_endpoint = endpoint_desc->bEndpointAddress;
-              device->out_endpoint_max_packet_size = endpoint_desc->wMaxPacketSize;
-              find_out_endpoint = -1;
-          }
-      }
-    }
-  }
-  libusb_free_config_descriptor(config);
+//         uint8_t endpoint_dir =
+//           endpoint_desc.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
+//         if (find_in_endpoint && endpoint_dir == LIBUSB_ENDPOINT_IN) {
+//           device->in_endpoint = endpoint_desc.bEndpointAddress;
+//           device->in_endpoint_max_packet_size = endpoint_desc.wMaxPacketSize;
+//           find_in_endpoint = -1;
+//         } else if (find_out_endpoint && endpoint_dir == LIBUSB_ENDPOINT_OUT) {
+//           device->out_endpoint = endpoint_desc.bEndpointAddress;
+//           device->out_endpoint_max_packet_size = endpoint_desc.wMaxPacketSize;
+//           find_out_endpoint = -1;
+//         }
+//       }
+//     }
+//   }
+//   libusb_free_config_descriptor(config);
 
-  const int result = !(find_in_endpoint || find_out_endpoint);
-  //CAMERACORE_log(fp, "exit with " << (result ? "1" : "-1"));
-  return result;
-}
+//   const int result = !(find_in_endpoint || find_out_endpoint);
+//   //CAMERACORE_log(fp, "exit with " << (result ? "1" : "-1"));
+//   return result;
+// }
 
 int PostOutTransfer(struct Device * device) {
   
-  libusb_transfer* out_transfer = libusb_alloc_transfer(16);
+  struct libusb_transfer* out_transfer = libusb_alloc_transfer(16);
   if (0 == out_transfer) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_alloc_transfer failed]");
     return -1;
@@ -385,7 +371,7 @@ int PostOutTransfer(struct Device * device) {
 
 int PostInTransfer(struct Device * device){
 
-  libusb_transfer* in_transfer = libusb_alloc_transfer(0);
+  struct libusb_transfer* in_transfer = libusb_alloc_transfer(0);
   if (NULL == in_transfer) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [libusb_alloc_transfer failed]");
     return -1;
@@ -468,7 +454,7 @@ void OutTransferCallback(struct libusb_transfer* transfer){
 }
 
 
-int CAMERACORE_libusb_SendData(struct Device* device){
+void CAMERACORE_libusb_SendData(struct Device* device){
   /*
   设置buffer属性
   */
@@ -480,7 +466,7 @@ int CAMERACORE_libusb_SendData(struct Device* device){
 }
 
 
-void CloseDeviceHandle(libusb_device_handle* device_handle_libusb){
+void CloseDeviceHandle(struct libusb_device_handle* device_handle_libusb){
 
 
 }

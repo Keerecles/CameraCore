@@ -94,8 +94,6 @@ configure_and_install_pkg(systemupdate.pc)
 
 SET(SRCS src/ivos-cameradae-service.c
          src/libusb-api.c
-         #src/libusb-api.cc
-         
 )
 
 ADD_EXECUTABLE(${TARGET_NAME} ${SRCS})
@@ -105,7 +103,7 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME}
                       ${gio_LDFLAGS}
                       ${dbus_LDFLAGS}
                      # ${DLT_LIBRARIES}
-        -libusb-1.0
+        -lusb-1.0
         -lgstreamer-1.0
         -lgstvideo-1.0
 			  -lpthread

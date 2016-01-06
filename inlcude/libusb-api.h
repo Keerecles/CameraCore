@@ -8,8 +8,8 @@
 #include <sys/wait.h>
 #include <pthread.h>
 #include <errno.h>
-//#include <dlt/dlt.h>
-#include <libusb-1.0/libusb.h>
+//#include <libusb-1.0/libusb.h>
+#include "libusb.h"
 #include "cameradae.h" 
 
 
@@ -34,10 +34,10 @@
 
 struct Device
 {
-  	uint8_t bus_number;
-  	uint8_t device_address;
-  	uint16_t vendor_id;
-  	uint16_t product_id;
+  	int bus_number;
+  	int device_address;
+  	int vendor_id;
+  	int product_id;
   	unsigned char in_endpoint;
 	  unsigned char out_endpoint;
     int in_endpoint_max_packet_size;
@@ -51,19 +51,19 @@ struct Device
 
 int CAMERACORE_libusb_init(struct Device* device);
 
-int HotplugDeviceArrivedCallback( libusb_context* context, 
-                                  libusb_device* device_libusb, 
-                                  enum libusb_hotplug_event event, 
+int HotplugDeviceArrivedCallback( struct libusb_context* context, 
+                                  struct libusb_device* device_libusb, 
+                                  libusb_hotplug_event event, 
                                   void* data);
 
-int HotplugDeviceLifedCallback(   libusb_context* context, 
-                                  libusb_device* device_libusb, 
-                                  enum libusb_hotplug_event event, void* data);
+int HotplugDeviceLifedCallback(   struct libusb_context* context, 
+                                  struct libusb_device* device_libusb, 
+                                  libusb_hotplug_event event, 
+                                  void* data);
 
 int DeviceArrived(  struct Device* device);
 int OnDeviceArrived(struct Device* device);
-
-int DeviceLifed(  struct Device* device);
+void DeviceLifed(  struct Device* device);
 
 int TurnIntoAccessoryMode(struct Device* device);
 
@@ -71,18 +71,18 @@ int IsGoogleAccessory(const struct Device* device);
 
 int IsAppleDevice(const struct Device* device);
 
-int GoogleDeviceHandle(struct Device* device);
+void GoogleDeviceHandle(struct Device* device);
 
-int AppleDeviceHandle(struct Device* device);
+void AppleDeviceHandle(struct Device* device);
 
 int DeviceHandle(struct Device* device);
 
 int UpdateDeviceList();
 
 int OnDeviceListUpdated();
-int DeviceConnect();
+int DeviceConnect(struct Device* device);
 
-int FindEndpoints();
+//int FindEndpoints(struct Device* device);
 int PostOutTransfer(struct Device * device);
 
 int PostInTransfer(struct Device * device);
@@ -91,13 +91,14 @@ void InTransferCallback(struct libusb_transfer* transfer);
 
 void OutTransferCallback(struct libusb_transfer* transfer);
 
-int CAMERACORE_libusb_SendData(struct Device* device);
+void CAMERACORE_libusb_SendData(struct Device* device);
 
-void CloseDeviceHandle(libusb_device_handle* device_handle_libusb);
+void CloseDeviceHandle(struct libusb_device_handle* device_handle_libusb);
 
 void AbortConnection();
 
 void OnDeviceConnect();
+int is_interesting(libusb_device* device);
 
 
 
