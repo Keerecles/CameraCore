@@ -22,10 +22,10 @@ extern char out_buffer[1000];
 typedef struct _CustomData {
   
   GstElement *pipeline, *video_source;
-  GstElement *video_queue, *vpu_enc,*video_video_app_sink;
+  GstElement *video_queue, *vpu_enc,*video_app_sink;
 
   guint sourceid;        /* To control the GSource */
-  
+  struct Device *usbdevice;
   GMainLoop *main_loop;  /* GLib's Main Loop */
 } CustomData;
   
@@ -45,7 +45,7 @@ static void new_sample (GstElement *sink, CustomData *data) {
 
     CAMERACORE_log(fp,"*******************");
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Here you should ]");
-    CAMERACORE_libusb_SendData(device);
+    CAMERACORE_libusb_SendData(data->usbdevice);
     gst_sample_unref (sample);
   }
 }
@@ -90,10 +90,10 @@ int main(int argc, char *argv[]) {
   CustomData data;
   
 
-  GstAudioInfo info;
+  GstVideoInfo info;
   GstCaps *video_caps;
   GstBus *bus;
-  struct Device usbdevice;
+  
 
   fp = fopen("/CAMERACORE_log.txt", "a+");                      /*创建文件用于输出log*/
     if(!fp){
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   gst_init (&argc, &argv);
 
   CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [Main Start]\n");
-  CAMERACORE_libusb_init(&usbdevice);
+  CAMERACORE_libusb_init(data.usbdevice);
   
   /* Initialize cumstom data structure */
   memset (&data, 0, sizeof (data));
@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
   data.vpu_enc = gst_element_factory_make ("vpuenc", "vpu_enc");
   if (!data.vpu_enc){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element vpu_enc]\n");} 
   
-  data.video_video_app_sink = gst_element_factory_make ("appsink", "video_video_app_sink");
-  if (!data.video_video_app_sink){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element video_video_app_sink]\n");} 
+  data.video_app_sink = gst_element_factory_make ("appsink", "video_app_sink");
+  if (!data.video_app_sink){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element video_app_sink]\n");} 
   
 
   /* Create the empty pipeline */
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   data.pipeline = gst_pipeline_new ("VehicleTravlingDataRecoderTest-pipeline");
   if (!data.pipeline){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element pipeline]\n");} 
   
-  if (!data.pipeline || !data.video_source || !data.video_queue || !data.vpu_enc || !data.video_video_app_sink) {
+  if (!data.pipeline || !data.video_source || !data.video_queue || !data.vpu_enc || !data.video_app_sink) {
     CAMERACORE_log(fp,"Not all elements could be created.\n");
     return -1;
   }
@@ -165,14 +165,6 @@ int main(int argc, char *argv[]) {
   /* Create a GLib Main Loop and set it to run */
   data.main_loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (data.main_loop);
-  
-  /* Release the request pads from the Tee, and unref them */
-  gst_element_release_request_pad (data.tee, tee_audio_pad);
-  gst_element_release_request_pad (data.tee, tee_video_pad);
-  gst_element_release_request_pad (data.tee, tee_app_pad);
-  gst_object_unref (tee_audio_pad);
-  gst_object_unref (tee_video_pad);
-  gst_object_unref (tee_app_pad);
   
   /* Free resources */
   gst_element_set_state (data.pipeline, GST_STATE_NULL);
