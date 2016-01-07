@@ -458,7 +458,7 @@ void CAMERACORE_libusb_SendData(struct Device* device){
   /*
   设置buffer属性
   */
-
+  CAMERACORE_log(fp, "[CAMERACORE_log]:In CAMERACORE_libusb_SendData [Send data to usb device]");
   PostOutTransfer(device);
   /*
   视频传输优化逻辑
