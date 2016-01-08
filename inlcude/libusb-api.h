@@ -8,8 +8,7 @@
 #include <sys/wait.h>
 #include <pthread.h>
 #include <errno.h>
-//#include <libusb-1.0/libusb.h>
-#include "libusb.h"
+#include <libusb-1.0/libusb.h>
 #include "cameradae.h" 
 
 
@@ -43,7 +42,7 @@ struct Device
     int in_endpoint_max_packet_size;
     int out_endpoint_max_packet_size;
     struct libusb_context* libusb_context_cameracore;
-  	struct libusb_device_descriptor* device_descriptor;
+  	struct libusb_device_descriptor device_descriptor;
     struct libusb_device_handle* device_handle_libusb;
   	struct libusb_device* device_libusb;
 };

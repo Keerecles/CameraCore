@@ -104,9 +104,11 @@ int main(int argc, char *argv[]) {
   /* Initialize GStreamer */
   gst_init (&argc, &argv);
 
-  CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [Main Start]\n");
-  CAMERACORE_libusb_init(data.usbdevice);
-  
+  CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [libusb init]\n");
+  int libusb_ret = CAMERACORE_libusb_init(data.usbdevice);
+  if( libusb_ret != 0){
+    CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [libusb init failed]\n");
+  }
   /* Initialize cumstom data structure */
   memset (&data, 0, sizeof (data));
   
