@@ -43,9 +43,11 @@ static void new_sample (GstElement *sink, CustomData *data) {
        然后调用libusb的CAMERACORE_libusb_SendData() 进行数据传输
     */
 
-    CAMERACORE_log(fp,"*******************");
-    CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Here you should ]");
-    CAMERACORE_libusb_SendData(data->usbdevice);
+    CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [*******************]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Here you should ]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Call Fuc. CAMERACORE_libusb_SendData()]\n");
+    //CAMERACORE_libusb_SendData(data->usbdevice);
+    CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [SendData has been done]\n");
     gst_sample_unref (sample);
   }
 }
@@ -99,21 +101,23 @@ int main(int argc, char *argv[]) {
     if(!fp){
     return 1;
   } 
-  CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [Main Start]\n");
-  CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [Gstreamer Init]\n");
+  CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Main Start]\n");
+  CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Gstreamer Init]\n");
   /* Initialize GStreamer */
   gst_init (&argc, &argv);
 
-  CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [libusb init]\n");
+  CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [libusb init]\n");
   int libusb_ret = CAMERACORE_libusb_init(data.usbdevice);
   if( libusb_ret != 0){
-    CAMERACORE_log(fp,"[CAMERACORE_log]: In main Fuc. [libusb init failed]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [libusb init failed]\n");
   }
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [libusb init finished]\n");
+
   /* Initialize cumstom data structure */
   memset (&data, 0, sizeof (data));
   
   /* Create the elements */
-
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Crete the elements]\n");
   data.video_source = gst_element_factory_make ("imxv4l2src", "video_source");
   if (!data.video_source){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element video_source]\n");}
   data.video_queue = gst_element_factory_make ("queue", "video_queue");
@@ -124,9 +128,9 @@ int main(int argc, char *argv[]) {
   data.video_app_sink = gst_element_factory_make ("appsink", "video_app_sink");
   if (!data.video_app_sink){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element video_app_sink]\n");} 
   
-
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Finished to create elements]\n");
   /* Create the empty pipeline */
-  
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Create the pipeline]\n");
   data.pipeline = gst_pipeline_new ("VehicleTravlingDataRecoderTest-pipeline");
   if (!data.pipeline){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element pipeline]\n");} 
   
@@ -134,17 +138,18 @@ int main(int argc, char *argv[]) {
     CAMERACORE_log(fp,"Not all elements could be created.\n");
     return -1;
   }
-  
+  CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Finished to create the pipeline]\n");
   /* Configure appsink */
   
+  CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Configure appsink]\n");
   gst_video_info_set_format (&info, GST_VIDEO_FORMAT_UNKNOWN, 1280,720);
   video_caps = gst_video_info_to_caps (&info);
-
   g_object_set (data.video_app_sink, "emit-signals", TRUE, "caps", video_caps, NULL);
   g_signal_connect (data.video_app_sink, "new-sample", G_CALLBACK (new_sample), &data);
   gst_caps_unref (video_caps);
-  
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Finished to configure appsink]\n");
   /* Link all elements that can be automatically linked because they have "Always" pads */
+  
   gst_bin_add_many (GST_BIN (data.pipeline), data.video_source, data.video_queue, data.vpu_enc, data.video_app_sink, NULL);
   
   if (gst_element_link_many (data.video_source, data.video_queue, NULL) != TRUE ||

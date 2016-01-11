@@ -118,6 +118,9 @@ int DeviceArrived(  struct Device* device){
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_device_descriptor failed]\n");
     return -1;
   }
+  g_printerr ("Device idVendor %d: \n", device->device_descriptor.idVendor);
+  g_printerr ("Device idProduct %d: \n", device->device_descriptor.idProduct);
+
   CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call libusb_open()]\n");
   libusb_ret = libusb_open(device->device_libusb, &(device->device_handle_libusb));
   if (libusb_ret != LIBUSB_SUCCESS) {
