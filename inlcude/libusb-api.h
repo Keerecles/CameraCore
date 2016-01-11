@@ -15,7 +15,7 @@
 // #define in_endpoint_max_packet_size		2764800  //The sise of one frame of 720P video is 2764800Byte
 // #define out_endpoint_max_packet_size	2764800
 #define kUsbConfiguration			   	    1
-#define kAoaVid  						          0x18d1
+#define kAoaVid  						          0x12d1
 #define kAoaPid1  						        0x2d00
 #define kAoaPid2  						        0x2d01
 #define kAoaInterfaceSubclass  			  0xff
@@ -35,8 +35,6 @@ struct Device
 {
   	int bus_number;
   	int device_address;
-  	int vendor_id;
-  	int product_id;
   	unsigned char in_endpoint;
 	  unsigned char out_endpoint;
     int in_endpoint_max_packet_size;
@@ -64,11 +62,11 @@ int DeviceArrived(  struct Device* device);
 int OnDeviceArrived(struct Device* device);
 void DeviceLifed(  struct Device* device);
 
-int TurnIntoAccessoryMode(struct Device* device);
+int TurnIntoAccessoryMode(struct libusb_device_descriptor* desptr);
 
-int IsGoogleAccessory(const struct Device* device);
+int IsGoogleAccessory(struct libusb_device_descriptor* desptr);
 
-int IsAppleDevice(const struct Device* device);
+int IsAppleDevice(struct libusb_device_descriptor* desptr);
 
 void GoogleDeviceHandle(struct Device* device);
 
@@ -97,7 +95,7 @@ void CloseDeviceHandle(struct libusb_device_handle* device_handle_libusb);
 void AbortConnection();
 
 void OnDeviceConnect();
-int is_interesting(libusb_device* device);
+int is_interesting(struct libusb_device_descriptor* desptr);
 
 
 

@@ -129,6 +129,8 @@ int main(int argc, char *argv[]) {
   if (!data.video_app_sink){CAMERACORE_log(fp,"[CAMERACORE_log]: Thread Gstreamer_Pipeline [Fail to create element video_app_sink]\n");} 
   
   CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Finished to create elements]\n");
+  
+
   /* Create the empty pipeline */
   CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Create the pipeline]\n");
   data.pipeline = gst_pipeline_new ("VehicleTravlingDataRecoderTest-pipeline");

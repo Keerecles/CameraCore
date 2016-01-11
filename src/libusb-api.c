@@ -72,49 +72,50 @@ int HotplugDeviceArrivedCallback( struct libusb_context* context,
   if (cnt < 0){
     CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Getting device list failed]\n");
   }
-  // for (i = 0; i < cnt; i++) {
-  //     libusb_device *dev = list[i];
-  //     if (!is_interesting(dev)) {
-  //         device->device_libusb =dev;
-  //         CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
-  //         DeviceArrived(device);
-  //         break;
-  //     }
-  // }
+
   for (i = 0; i < cnt; i++) {
       libusb_device *dev = list[i];
       struct libusb_device_descriptor dsp;
       int libusb_ret = libusb_get_device_descriptor(dev, &dsp);
       if (LIBUSB_SUCCESS != libusb_ret) {
-        CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_device_descriptor failed]\n");
+        CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [libusb_get_device_descriptor failed]\n");
         return -1;
       }
-      if(dsp.idVendor==0x12d1){
-        g_printerr ("Device IdVendor %d: \n", dsp.idVendor);
-        g_printerr ("Device IdProduct %d: \n", dsp.idProduct);
-        device->device_libusb =dev;
-        CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
-        DeviceArrived(device);
+      if (!is_interesting(&dsp)) {
+          device->device_libusb =dev;
+          g_printerr ("Device IdVendor %d: \n", dsp.idVendor);
+          g_printerr ("Device IdProduct %d: \n", dsp.idProduct);
+          CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
+          DeviceArrived(device);
+          break;
       }
   }
-  // for (i = 0; i < cnt; i++) {
-  //     libusb_device *dev = list[i];
-  //     if (!is_interesting(dev)) {
-  //         device->device_libusb =dev;
-  //         CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
-  //         DeviceArrived(device);
-  //         break;
-  //     }
-  // }
+ 
   libusb_free_device_list(list, 1);
   return 0;
 }
 
 
 
-int is_interesting(libusb_device* device){
-    CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [Have found the device]\n");
-    return 0;
+int is_interesting(struct libusb_device_descriptor* desptr){
+    /*
+      判断设备类型 工作模式的确定
+    */
+    if (IsAppleDevice(desptr)) {
+      //AppleDeviceHandle(device);
+      CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [Apple device has been found]\n");
+      return 0;
+    } 
+    if (IsGoogleAccessory(desptr)){
+                  
+                  //GoogleDeviceHandle(device);
+                  CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [Android device has been found]\n");
+                  return 0;
+    }
+    
+    else {  CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [No interesting device]\n");
+            return -1;
+    }
 }
 
 int HotplugDeviceLifedCallback(   struct libusb_context* context, 
@@ -141,16 +142,12 @@ int DeviceArrived(  struct Device* device){
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_device_descriptor failed]\n");
     return -1;
   }
-  g_printerr ("Device idVendor %d: \n", device->device_descriptor.idVendor);
-  g_printerr ("Device idProduct %d: \n", device->device_descriptor.idProduct);
+  g_printerr ("In DeviceArrived Device idVendor %d: \n", device->device_descriptor.idVendor);
+  g_printerr ("In DeviceArrived Device idProduct %d: \n", device->device_descriptor.idProduct);
 
   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_open()]\n");
   libusb_ret = libusb_open(device->device_libusb, &(device->device_handle_libusb));
-  //device->device_handle_libusb = libusb_open_device_with_vid_pid(device->libusb_context_cameracore, 0x12d1, 0x041c);
-  // if (!device->device_handle_libusb) {
-  //   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Error finding USB device\n]\n");
-  //   return -1;
-  // }
+
   if (libusb_ret != LIBUSB_SUCCESS) {
     CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_open failed]\n");
     return -1;
@@ -197,22 +194,6 @@ int DeviceArrived(  struct Device* device){
 }
 
 int OnDeviceArrived(struct Device* device){
-
-    /*
-      判断设备类型 工作模式的确定
-    */
-    if (IsAppleDevice(device)) {
-      AppleDeviceHandle(device);
-    } 
-      else {  if (IsGoogleAccessory(device)) {
-                  
-                  GoogleDeviceHandle(device);
-              }   
-                else {  TurnIntoAccessoryMode(device);
-                }
-      }
-
-
     /*
       多设备的处理 buffer分配 endpoint的分配
     */
@@ -237,27 +218,26 @@ void DeviceLifed(  struct Device * device){
 }
 
 
-int TurnIntoAccessoryMode(struct Device* device){
+int TurnIntoAccessoryMode(struct libusb_device_descriptor* desptr){
   //留作其他设备接口
   return 0;
 }
 
 
-int IsGoogleAccessory(const struct Device* device) {
-  return (kAoaVid == device->vendor_id) &&
-    ((kAoaPid1 == device->product_id) || (kAoaPid2 == device->product_id));
+int IsGoogleAccessory(struct libusb_device_descriptor* desptr) {
+  return (kAoaVid == desptr->idVendor);
 }
 
 
-int IsAppleDevice(const struct Device* device) {
-  return (kAppleVid == device->vendor_id) &&
-    ((kApplePid1 == device->product_id) ||
-     (kApplePid2 == device->product_id) ||
-     (kApplePid3 == device->product_id) ||
-     (kApplePid4 == device->product_id) ||
-     (kApplePid5 == device->product_id) ||
-     (kApplePid6 == device->product_id) ||
-     (kApplePid7 == device->product_id));
+int IsAppleDevice(struct libusb_device_descriptor* desptr) {
+  return (kAppleVid == desptr->idVendor) &&
+    ((kApplePid1 == desptr->idProduct) ||
+     (kApplePid2 == desptr->idProduct) ||
+     (kApplePid3 == desptr->idProduct) ||
+     (kApplePid4 == desptr->idProduct) ||
+     (kApplePid5 == desptr->idProduct) ||
+     (kApplePid6 == desptr->idProduct) ||
+     (kApplePid7 == desptr->idProduct));
 }
 
 
@@ -285,6 +265,7 @@ int DeviceHandle(struct Device* device){
 /*
   填充数据
 */
+
   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceHandle [DeviceHandle() has been done]\n");  
   return 0;
 }
@@ -294,7 +275,7 @@ int UpdateDeviceList(){
       参考sdl transport_adapter_impl.cc L373 SerchDeviceDone 来更新列表
       device 列表 是否需要自己定制？
       */
-    CAMERACORE_log(fp, "[CAMERACORE_log]: UpdateDeviceList [In UpdateDeviceList updatedevicelist has been done]\n");  
+    CAMERACORE_log(fp, "[CAMERACORE_log]: UpdateDeviceList [Devicelist has been update]\n");  
     OnDeviceListUpdated();
     return 0;
 }
@@ -521,6 +502,6 @@ void OnDeviceConnect(){
   /*
     向上层通知 设备链接成功，可以进行数据传输
   */
-  CAMERACORE_log(fp, "[CAMERACORE_log]: OnDeviceConnect [Inform the higher level ,\nthe DeviceConnect has completed and data transform is ready]");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: OnDeviceConnect [Inform the higher level ,\nthe DeviceConnect has completed and data transform is ready]\n");
 
 }
