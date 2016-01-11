@@ -46,7 +46,7 @@ static void new_sample (GstElement *sink, CustomData *data) {
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [*******************]\n");
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Here you should ]\n");
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Call Fuc. CAMERACORE_libusb_SendData()]\n");
-    //CAMERACORE_libusb_SendData(data->usbdevice);
+    CAMERACORE_libusb_SendData(data->usbdevice);
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [SendData has been done]\n");
     gst_sample_unref (sample);
   }

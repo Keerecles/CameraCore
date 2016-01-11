@@ -9,23 +9,23 @@ libusb_hotplug_callback_handle HotplugLeftCallbackHandle;
 
 
 int CAMERACORE_libusb_init(struct Device* device){
-  CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [START]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [START]\n");
   /*init the endpoint*/
   device->in_endpoint = 0 ;
   device->out_endpoint = 0;
 
-  CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [libusb_init]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [libusb_init]\n");
   int libusb_ret = libusb_init(&(device->libusb_context_cameracore));
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [libusb_init failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [libusb_init failed]\n");
     return -1;
   }
 
   if (!libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [LIBUSB_CAP_HAS_HOTPLUG not supported]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [LIBUSB_CAP_HAS_HOTPLUG not supported]\n");
     return -1;
   }
-  CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [For device In Call libusb_hotplug_register_callback()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [For device In Call libusb_hotplug_register_callback()]\n");
   libusb_ret = libusb_hotplug_register_callback(
                  device->libusb_context_cameracore, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED,
                  LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY,
@@ -33,13 +33,13 @@ int CAMERACORE_libusb_init(struct Device* device){
                  &HotplugArrivedCallbackHandle);
 
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp,"[CAMERACORE_log]:CAMERACORE_libusb_init [libusb_hotplug_register_callback-In failed]\n");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: CAMERACORE_libusb_init [libusb_hotplug_register_callback-In failed]\n");
     //CAMERACORE_log(fp,libusb_ret);
     // CAMERACORE_log(fp, "]");
     return -1;
   }
 
-  CAMERACORE_log(fp, "[CAMERACORE_log]:CAMERACORE_libusb_init [For device Out Call libusb_hotplug_register_callback()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [For device Out Call libusb_hotplug_register_callback()]\n");
   libusb_ret = libusb_hotplug_register_callback(
                  device->libusb_context_cameracore, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
                  LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY,
@@ -47,9 +47,7 @@ int CAMERACORE_libusb_init(struct Device* device){
                  &HotplugLeftCallbackHandle);
 
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp,"[CAMERACORE_log]:CAMERACORE_libusb_init [libusb_hotplug_register_callback-Out failed]\n");
-    // CAMERACORE_log(fp,libusb_ret);
-    // CAMERACORE_log(fp, "]");
+    CAMERACORE_log(fp,"[CAMERACORE_log]: CAMERACORE_libusb_init [libusb_hotplug_register_callback-Out failed]\n");
     return -1;
   }
   return 0;
@@ -63,26 +61,51 @@ int HotplugDeviceArrivedCallback( struct libusb_context* context,
 
   int i = 0;
   int err = 0;
-  CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [HotplugDeviceArrivedCallback START]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [HotplugDeviceArrivedCallback START]\n");
   //获取热插拔传递的device地址
-  CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [Get the data pointer from libusb_hotplug_register_callback]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Get the data pointer from libusb_hotplug_register_callback]\n");
   struct Device* device =(struct Device*)(data);
   // discover devices  获取热插拔传递的device
   struct libusb_device **list;
-  CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [libusb_get_device_list()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [libusb_get_device_list()]\n");
   int cnt = libusb_get_device_list(device->libusb_context_cameracore, &list);
   if (cnt < 0){
-    CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [Getting device list failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Getting device list failed]\n");
   }
+  // for (i = 0; i < cnt; i++) {
+  //     libusb_device *dev = list[i];
+  //     if (!is_interesting(dev)) {
+  //         device->device_libusb =dev;
+  //         CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
+  //         DeviceArrived(device);
+  //         break;
+  //     }
+  // }
   for (i = 0; i < cnt; i++) {
       libusb_device *dev = list[i];
-      if (!is_interesting(dev)) {
-          device->device_libusb =dev;
-          CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
-          DeviceArrived(device);
-          break;
+      struct libusb_device_descriptor dsp;
+      int libusb_ret = libusb_get_device_descriptor(dev, &dsp);
+      if (LIBUSB_SUCCESS != libusb_ret) {
+        CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_device_descriptor failed]\n");
+        return -1;
+      }
+      if(dsp.idVendor==0x12d1){
+        g_printerr ("Device IdVendor %d: \n", dsp.idVendor);
+        g_printerr ("Device IdProduct %d: \n", dsp.idProduct);
+        device->device_libusb =dev;
+        CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
+        DeviceArrived(device);
       }
   }
+  // for (i = 0; i < cnt; i++) {
+  //     libusb_device *dev = list[i];
+  //     if (!is_interesting(dev)) {
+  //         device->device_libusb =dev;
+  //         CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
+  //         DeviceArrived(device);
+  //         break;
+  //     }
+  // }
   libusb_free_device_list(list, 1);
   return 0;
 }
@@ -90,7 +113,7 @@ int HotplugDeviceArrivedCallback( struct libusb_context* context,
 
 
 int is_interesting(libusb_device* device){
-    CAMERACORE_log(fp, "[CAMERACORE_log]:is_interesting [Have found the device]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [Have found the device]\n");
     return 0;
 }
 
@@ -99,7 +122,7 @@ int HotplugDeviceLifedCallback(   struct libusb_context* context,
                                   libusb_hotplug_event event, 
                                   void* data){
 
-  CAMERACORE_log(fp, "[CAMERACORE_log]:HotplugDeviceLifedCallback [Get the data pointer]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceLifedCallback [Get the data pointer]\n");
   /**********
   数据 参数转换    
   *************/
@@ -111,8 +134,8 @@ int HotplugDeviceLifedCallback(   struct libusb_context* context,
 
 int DeviceArrived(  struct Device* device){
   
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [START]\n");
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call libusb_get_device_descriptor()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [START]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_get_device_descriptor()]\n");
   int libusb_ret = libusb_get_device_descriptor(device->device_libusb, &device->device_descriptor);
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_device_descriptor failed]\n");
@@ -121,36 +144,43 @@ int DeviceArrived(  struct Device* device){
   g_printerr ("Device idVendor %d: \n", device->device_descriptor.idVendor);
   g_printerr ("Device idProduct %d: \n", device->device_descriptor.idProduct);
 
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call libusb_open()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_open()]\n");
   libusb_ret = libusb_open(device->device_libusb, &(device->device_handle_libusb));
+  //device->device_handle_libusb = libusb_open_device_with_vid_pid(device->libusb_context_cameracore, 0x12d1, 0x041c);
+  // if (!device->device_handle_libusb) {
+  //   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Error finding USB device\n]\n");
+  //   return -1;
+  // }
   if (libusb_ret != LIBUSB_SUCCESS) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_open failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_open failed]\n");
     return -1;
   }
 
   int configuration;
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call libusb_get_configuration()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_get_configuration()]\n");
   libusb_ret = libusb_get_configuration(device->device_handle_libusb, &configuration);
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_configuration failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_get_configuration failed]\n");
     return -1;
   }
 
   if (configuration != kUsbConfiguration) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call libusb_set_configuration()]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_set_configuration()]\n");
     libusb_ret = libusb_set_configuration(device->device_handle_libusb, kUsbConfiguration);
     if (LIBUSB_SUCCESS != libusb_ret) {
-      CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_set_configuration failed]\n");
+      CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_set_configuration failed]\n");
       return -1;
     }
   }
 
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call libusb_claim_interface()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_claim_interface()]\n");
+  
   libusb_ret = libusb_claim_interface(device->device_handle_libusb, 0);
+  
   if (LIBUSB_SUCCESS != libusb_ret) {
     
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_claim_interface failed]\n");
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call CloseDeviceHandle()]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_claim_interface failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call CloseDeviceHandle()]\n");
     CloseDeviceHandle(device->device_handle_libusb);
     return -1;
   }
@@ -159,9 +189,9 @@ int DeviceArrived(  struct Device* device){
   /***********
         push the device to the device list
   ****************/
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call UpdateDeviceList()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call UpdateDeviceList()]\n");
   UpdateDeviceList();
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [call OnDeviceArrived()]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call OnDeviceArrived()]\n");
   OnDeviceArrived(device);
   return 0;
 }
@@ -186,7 +216,7 @@ int OnDeviceArrived(struct Device* device){
     /*
       多设备的处理 buffer分配 endpoint的分配
     */
-    CAMERACORE_log(fp, "[CAMERACORE_log]:OnDeviceArrived [call DeviceConnect()]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: OnDeviceArrived [call DeviceConnect()]\n");
     DeviceConnect(device);
     return 0;
 }
@@ -194,7 +224,7 @@ int OnDeviceArrived(struct Device* device){
 
 void DeviceLifed(  struct Device * device){
 
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceLifed [Device has lifed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceLifed [Device has lifed]\n");
 
 
     //libusb_handle_events_completed(libusb_context_cameracore, &completed);
@@ -255,7 +285,7 @@ int DeviceHandle(struct Device* device){
 /*
   填充数据
 */
-  CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceHandle [DeviceHandle() has been done]\n");  
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceHandle [DeviceHandle() has been done]\n");  
   return 0;
 }
 
@@ -264,7 +294,7 @@ int UpdateDeviceList(){
       参考sdl transport_adapter_impl.cc L373 SerchDeviceDone 来更新列表
       device 列表 是否需要自己定制？
       */
-    CAMERACORE_log(fp, "[CAMERACORE_log]:UpdateDeviceList [In UpdateDeviceList updatedevicelist has been done]\n");  
+    CAMERACORE_log(fp, "[CAMERACORE_log]: UpdateDeviceList [In UpdateDeviceList updatedevicelist has been done]\n");  
     OnDeviceListUpdated();
     return 0;
 }
@@ -275,7 +305,7 @@ int OnDeviceListUpdated(){
     /*
       通知上层 列表更新完成 并使上层进行相应的操作
     */
-    CAMERACORE_log(fp, "[CAMERACORE_log]:OnDeviceListUpdated [Inform the higher level to aquire the respond]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: OnDeviceListUpdated [Inform the higher level to aquire the respond]\n");
     return 0;
 }
 
@@ -303,7 +333,7 @@ int DeviceConnect(struct Device* device){
    /********************************************
       向上层通知 设备链接成功，可以进行数据传输
     *********************************************/
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [Call OnDeviceConnect]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceConnect [Call OnDeviceConnect]\n");
     OnDeviceConnect();
 
   return  0;
@@ -357,22 +387,22 @@ int DeviceConnect(struct Device* device){
 // }
 
 int PostOutTransfer(struct Device * device) {
-  
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostOutTransfer [Call libusb_alloc_transfer]\n");
   struct libusb_transfer* out_transfer = libusb_alloc_transfer(16);
   if (0 == out_transfer) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_alloc_transfer failed]\n");
     return -1;
   }
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostOutTransfer [Call libusb_fill_iso_transfer()]\n");
   libusb_fill_iso_transfer(out_transfer,device->device_handle_libusb,device->out_endpoint,out_buffer,
         sizeof(out_transfer), 16,OutTransferCallback, NULL, 0);
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostOutTransfer [Call libusb_set_iso_packet_lengths()]\n");
   libusb_set_iso_packet_lengths(out_transfer, sizeof(out_buffer)/16);
-
+  
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostOutTransfer [Call libusb_submit_transfer()]\n");
   const int libusb_ret = libusb_submit_transfer(out_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
     CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_submit_transfer failed]\n");
-    // CAMERACORE_log(fp,libusb_error_name(libusb_ret));
-    // CAMERACORE_log(fp,"[CAMERACORE_log]:PostOutTransfer [Abort connection]");
-
     AbortConnection();
     return -1;
   }
@@ -383,7 +413,7 @@ int PostInTransfer(struct Device * device){
 
   struct libusb_transfer* in_transfer = libusb_alloc_transfer(0);
   if (NULL == in_transfer) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [libusb_alloc_transfer failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceConnect [libusb_alloc_transfer failed]\n");
     return -1;
   }
 
@@ -392,7 +422,7 @@ int PostInTransfer(struct Device * device){
                             InTransferCallback, NULL, 0);
   const int libusb_ret = libusb_submit_transfer(in_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:PostInTransfer [libusb_submit_transfer failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: PostInTransfer [libusb_submit_transfer failed]\n");
     // CAMERACORE_log(fp,libusb_error_name(libusb_ret));
     // CAMERACORE_log(fp,"]");
     return -1;
@@ -417,7 +447,7 @@ void InTransferCallback(struct libusb_transfer* transfer){
   */
   } 
   else {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:InTransferCallback USB incoming transfer failed: ");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: InTransferCallback USB incoming transfer failed: ");
     // CAMERACORE_log(fp,libusb_error_name(transfer->status));
     // CAMERACORE_log(fp,"]");
 
@@ -454,7 +484,7 @@ void OutTransferCallback(struct libusb_transfer* transfer){
   } 
   else {
    
-    CAMERACORE_log(fp, "[CAMERACORE_log]:OutTransferCallback USB incoming transfer failed: ");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: OutTransferCallback USB incoming transfer failed: ");
     // CAMERACORE_log(fp,libusb_error_name(transfer->status));
     // CAMERACORE_log(fp,"]");
     /*
@@ -468,8 +498,10 @@ void CAMERACORE_libusb_SendData(struct Device* device){
   /*
   设置buffer属性
   */
-  CAMERACORE_log(fp, "[CAMERACORE_log]:In CAMERACORE_libusb_SendData [Send data to usb device]");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In CAMERACORE_libusb_SendData [Send data to usb device]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In CAMERACORE_libusb_SendData [Call PostOutTransfer()]\n");
   PostOutTransfer(device);
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In CAMERACORE_libusb_SendData [Finished to call PostOutTransfer()]\n");
   /*
   视频传输优化逻辑
   */
@@ -489,6 +521,6 @@ void OnDeviceConnect(){
   /*
     向上层通知 设备链接成功，可以进行数据传输
   */
-  CAMERACORE_log(fp, "[CAMERACORE_log]:OnDeviceConnect [Inform the higher level ,\nthe DeviceConnect has completed and data transform is ready]");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: OnDeviceConnect [Inform the higher level ,\nthe DeviceConnect has completed and data transform is ready]");
 
 }
