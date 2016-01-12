@@ -25,7 +25,6 @@ typedef struct _CustomData {
   GstElement *video_queue, *vpu_enc,*video_app_sink;
 
   guint sourceid;        /* To control the GSource */
-  struct Device *usbdevice;
   GMainLoop *main_loop;  /* GLib's Main Loop */
 } CustomData;
   
@@ -90,7 +89,7 @@ void CAMERACORE_log(FILE *file, char *log_){
 int main(int argc, char *argv[]) {
 
   CustomData data;
-  
+  struct Device *usbdevice;
 
   GstVideoInfo info;
   GstCaps *video_caps;
@@ -107,7 +106,7 @@ int main(int argc, char *argv[]) {
   gst_init (&argc, &argv);
 
   CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [libusb init]\n");
-  int libusb_ret = CAMERACORE_libusb_init(data.usbdevice);
+  int libusb_ret = CAMERACORE_libusb_init(usbdevice);
   if( libusb_ret != 0){
     CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [libusb init failed]\n");
   }
@@ -151,7 +150,7 @@ int main(int argc, char *argv[]) {
   gst_caps_unref (video_caps);
   CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Finished to configure appsink]\n");
   /* Link all elements that can be automatically linked because they have "Always" pads */
-  
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Link all the elements]\n");
   gst_bin_add_many (GST_BIN (data.pipeline), data.video_source, data.video_queue, data.vpu_enc, data.video_app_sink, NULL);
   
   if (gst_element_link_many (data.video_source, data.video_queue, NULL) != TRUE ||
@@ -160,7 +159,7 @@ int main(int argc, char *argv[]) {
     gst_object_unref (data.pipeline);
     return -1;
   }
-  
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [All the elements are linked]\n");
   
   /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
   bus = gst_element_get_bus (data.pipeline);
@@ -169,8 +168,9 @@ int main(int argc, char *argv[]) {
   gst_object_unref (bus);
   
   /* Start playing the pipeline */
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Start playing the pipeline]\n");
   gst_element_set_state (data.pipeline, GST_STATE_PLAYING);
-  
+  CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [After Start playing the pipeline]\n");
   /* Create a GLib Main Loop and set it to run */
   data.main_loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (data.main_loop);
