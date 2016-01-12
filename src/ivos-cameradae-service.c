@@ -101,6 +101,11 @@ int main(int argc, char *argv[]) {
     return 1;
   } 
   CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Main Start]\n");
+  
+  /* Initialize cumstom data structure */
+  memset (&data, 0, sizeof (data));
+
+
   CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Gstreamer Init]\n");
   /* Initialize GStreamer */
   gst_init (&argc, &argv);
@@ -112,8 +117,7 @@ int main(int argc, char *argv[]) {
   }
   CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [libusb init finished]\n");
 
-  /* Initialize cumstom data structure */
-  memset (&data, 0, sizeof (data));
+  
   
   /* Create the elements */
   CAMERACORE_log(fp,"[CAMERECORE_log]: In Fuc. main [Crete the elements]\n");
@@ -140,8 +144,12 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Finished to create the pipeline]\n");
-  /* Configure appsink */
   
+  /* Configure wavescope */
+  g_object_set (data.video_source, "device", "/dev/video1", NULL);
+  
+ 
+  /* Configure appsink */ 
   CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [Configure appsink]\n");
   gst_video_info_set_format (&info, GST_VIDEO_FORMAT_UNKNOWN, 1280,720);
   video_caps = gst_video_info_to_caps (&info);
