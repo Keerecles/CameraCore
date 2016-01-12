@@ -27,7 +27,8 @@ typedef struct _CustomData {
   guint sourceid;        /* To control the GSource */
   GMainLoop *main_loop;  /* GLib's Main Loop */
 } CustomData;
-  
+
+struct Device usbdevice;
 
 
 /* The appsink has received a buffer */
@@ -45,7 +46,7 @@ static void new_sample (GstElement *sink, CustomData *data) {
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [*******************]\n");
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Here you should ]\n");
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [Call Fuc. CAMERACORE_libusb_SendData()]\n");
-    CAMERACORE_libusb_SendData(data->usbdevice);
+    CAMERACORE_libusb_SendData(&usbdevice);
     CAMERACORE_log(fp,"[CAMERACORE_log]: In new_sample Fuc. [SendData has been done]\n");
     gst_sample_unref (sample);
   }
@@ -85,11 +86,10 @@ void CAMERACORE_log(FILE *file, char *log_){
 
 
 
-
 int main(int argc, char *argv[]) {
 
   CustomData data;
-  struct Device *usbdevice;
+  
 
   GstVideoInfo info;
   GstCaps *video_caps;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   gst_init (&argc, &argv);
 
   CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [libusb init]\n");
-  int libusb_ret = CAMERACORE_libusb_init(usbdevice);
+  int libusb_ret = CAMERACORE_libusb_init(&usbdevice);
   if( libusb_ret != 0){
     CAMERACORE_log(fp,"[CAMERACORE_log]: In Fuc. main [libusb init failed]\n");
   }
