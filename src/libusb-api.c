@@ -8,6 +8,13 @@ libusb_hotplug_callback_handle HotplugArrivedCallbackHandle;
 libusb_hotplug_callback_handle HotplugLeftCallbackHandle;
 
 
+const char *vendor = "Ekai";
+const char *model = "MCIMX6Q-SDB";
+const char *description = "Android-Auto-Interface";
+const char *version = "ARM0.3.21";
+const char *uri = "http://ekai.china.cn";
+const char *serial = "1234567890";
+
 int CAMERACORE_libusb_init(struct Device* device){
   CAMERACORE_log(fp, "[CAMERACORE_log]: CAMERACORE_libusb_init [START]\n");
   /*init the endpoint*/
@@ -72,25 +79,15 @@ int HotplugDeviceArrivedCallback( struct libusb_context* context,
   if (cnt < 0){
     CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Getting device list failed]\n");
   }
-
-  for (i = 0; i < cnt; i++) {
-      libusb_device *dev = list[i];
-      struct libusb_device_descriptor dsp;
-      int libusb_ret = libusb_get_device_descriptor(dev, &dsp);
-      if (LIBUSB_SUCCESS != libusb_ret) {
-        CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [libusb_get_device_descriptor failed]\n");
-        return -1;
-      }
-      if (!is_interesting(&dsp)) {
-          device->device_libusb =dev;
+  struct libusb_device_descriptor dsp;
+  int libusb_ret = libusb_get_device_descriptor(device_libusb, &dsp);
+  if (is_interesting(&dsp)) {
+          device->device_libusb =device_libusb;
           g_printerr ("Device IdVendor %d: \n", dsp.idVendor);
           g_printerr ("Device IdProduct %d: \n", dsp.idProduct);
           CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
           DeviceArrived(device);
-          break;
       }
-  }
- 
   libusb_free_device_list(list, 1);
   return 0;
 }
@@ -104,17 +101,17 @@ int is_interesting(struct libusb_device_descriptor* desptr){
     if (IsAppleDevice(desptr)) {
       //AppleDeviceHandle(device);
       CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [Apple device has been found]\n");
-      return 0;
+      return 1;
     } 
     if (IsGoogleAccessory(desptr)){
                   
                   //GoogleDeviceHandle(device);
                   CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [Android device has been found]\n");
-                  return 0;
+                  return 1;
     }
     
     else {  CAMERACORE_log(fp, "[CAMERACORE_log]: is_interesting [No interesting device]\n");
-            return -1;
+            return 0;
     }
 }
 
@@ -144,6 +141,16 @@ int DeviceArrived(  struct Device* device){
   }
   g_printerr ("In DeviceArrived Device idVendor %d: \n", device->device_descriptor.idVendor);
   g_printerr ("In DeviceArrived Device idProduct %d: \n", device->device_descriptor.idProduct);
+
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Check if the Android device is in USB Accessory mode]\n");
+  CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Call Fuc. isAndroidInAcc()\n");
+  libusb_ret = isAndroidInAcc(&device->device_descriptor);
+  if(!libusb_ret){
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [The Android device is not in USB Accessory mode] \n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Call Fuc. switchAndroidToAcc] \n");
+    switchAndroidToAcc(device);
+  }
+
 
   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_open()]\n");
   libusb_ret = libusb_open(device->device_libusb, &(device->device_handle_libusb));
@@ -222,6 +229,130 @@ int TurnIntoAccessoryMode(struct libusb_device_descriptor* desptr){
   //留作其他设备接口
   return 0;
 }
+int isAndroidInAcc(struct libusb_device_descriptor* desc) {
+  
+  if (desc->idVendor == VID_GOOGLE) {
+    switch(desc->idProduct) {
+    case PID_AOA_ACC:
+    case PID_AOA_ACC_ADB:
+    case PID_AOA_ACC_AU:
+    case PID_AOA_ACC_AU_ADB:
+      return 1;
+    case PID_AOA_AU:
+    case PID_AOA_AU_ADB:
+      CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. isAndroidInAcc [device is audio-only]\n");
+      break;
+    default:
+      break;
+    }
+  }
+  return 0;
+}
+
+void switchAndroidToAcc(struct Device *device) {
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [START]\n");
+  int force=1; 
+  int audio=0;
+  unsigned char ioBuffer[2];
+  int r;
+  int deviceProtocol;
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Call Fuc. libusb_open]\n");
+  if(0 > libusb_open(device->device_libusb, &device->device_handle_libusb)){
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Failed to connect to device]\n");
+    return;
+  }
+
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Call Fuc. libusb_kernel_driver_active]\n");
+  if(libusb_kernel_driver_active(device->device_handle_libusb, 0) > 0) {
+    if(!force) {
+      CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [kernel driver active, ignoring device]\n");
+      libusb_close(device->device_handle_libusb);
+      return;
+    }
+    if(libusb_detach_kernel_driver(device->device_handle_libusb, 0)!=0) {
+      CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [failed to detach kernel driver, ignoring device]\n");
+      libusb_close(device->device_handle_libusb);
+      return;
+    }
+  }
+
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Get protocol call]\n");
+  if(0> (r = libusb_control_transfer(device->device_handle_libusb,
+      0xC0, //bmRequestType
+      51, //Get Protocol
+      0,
+      0,
+      ioBuffer,
+      2,
+      2000))) {
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Get protocol call failed]\n");
+    libusb_close(device->device_handle_libusb);
+    return;
+  }
+
+  deviceProtocol = ioBuffer[1] << 8 | ioBuffer[0];
+  if (deviceProtocol < AOA_PROTOCOL_MIN || deviceProtocol > AOA_PROTOCOL_MAX) {
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Unsupported AOA protocol]\n");
+    libusb_close(device->device_handle_libusb);
+    return;
+  }
+
+  const char *setupStrings[6];
+  setupStrings[0] = vendor;
+  setupStrings[1] = model;
+  setupStrings[2] = description;
+  setupStrings[3] = version;
+  setupStrings[4] = uri;
+  setupStrings[5] = serial;
+
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [send string: vendor model eg.]\n");
+  int i;
+  for(i=0;i<6;i++) {
+    if(0 > (r = libusb_control_transfer(device->device_handle_libusb,
+        0x40,
+        52,
+        0,
+        (uint16_t)i,
+        (unsigned char*)setupStrings[i],
+        strlen(setupStrings[i]),2000))) {
+      CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [send string call failed]\n");
+      libusb_close(device->device_handle_libusb);
+      return;
+    }
+  }
+
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Set audio]\n");
+  if (deviceProtocol >= 2) {
+    if(0 > (r = libusb_control_transfer(device->device_handle_libusb,
+        0x40,
+        58,
+#ifdef USE_AUDIO
+        audio, // 0=no audio, 1=2ch,16bit PCM, 44.1kHz
+#else
+        0,
+#endif
+        0,
+        NULL,
+        0,
+        2000))) {
+      CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Set audio call failed]\n");
+      libusb_close(device->device_handle_libusb);
+      return;
+    }
+  }
+
+  CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Start accessory]\n");
+  if(0 > (r = libusb_control_transfer(device->device_handle_libusb,0x40,53,0,0,NULL,0,2000))) {
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. switchAndroidToAcc [Start accessory call failed]\n");
+    libusb_close(device->device_handle_libusb);
+    return;
+  }
+
+  libusb_close(device->device_handle_libusb);
+}
+
+
+
 
 
 int IsGoogleAccessory(struct libusb_device_descriptor* desptr) {

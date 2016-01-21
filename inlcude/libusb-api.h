@@ -20,6 +20,20 @@
 #define kAoaPid2  						        0x2d01
 #define kAoaInterfaceSubclass  			  0xff
 
+#define AOA_PROTOCOL_MIN              1
+#define AOA_PROTOCOL_MAX              2
+
+#define VID_GOOGLE                    0x18D1
+#define PID_AOA_ACC                   0x2D00
+#define PID_AOA_ACC_ADB               0x2D01
+#define PID_AOA_AU                    0x2D02
+#define PID_AOA_AU_ADB                0x2D03
+#define PID_AOA_ACC_AU                0x2D04
+#define PID_AOA_ACC_AU_ADB            0x2D05
+
+
+
+
 #define kAppleVid  						0x05ac
 #define kApplePid1  					0x1290 // iPhone
 #define kApplePid2  					0x1292 // iPhone 3G
@@ -63,6 +77,10 @@ int OnDeviceArrived(struct Device* device);
 void DeviceLifed(  struct Device* device);
 
 int TurnIntoAccessoryMode(struct libusb_device_descriptor* desptr);
+
+int isAndroidInAcc(struct libusb_device_descriptor* desc);
+
+void switchAndroidToAcc(struct Device *device);
 
 int IsGoogleAccessory(struct libusb_device_descriptor* desptr);
 
