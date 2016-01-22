@@ -73,22 +73,20 @@ int HotplugDeviceArrivedCallback( struct libusb_context* context,
   CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Get the data pointer from libusb_hotplug_register_callback]\n");
   struct Device* device =(struct Device*)(data);
   // discover devices  获取热插拔传递的device
-  struct libusb_device **list;
-  CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [libusb_get_device_list()]\n");
-  int cnt = libusb_get_device_list(device->libusb_context_cameracore, &list);
-  if (cnt < 0){
-    CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Getting device list failed]\n");
-  }
+ 
   struct libusb_device_descriptor dsp;
   int libusb_ret = libusb_get_device_descriptor(device_libusb, &dsp);
   if (is_interesting(&dsp)) {
           device->device_libusb =device_libusb;
-          g_printerr ("Device IdVendor %d: \n", dsp.idVendor);
-          g_printerr ("Device IdProduct %d: \n", dsp.idProduct);
+          g_printerr ("Goal device IdVendor %d: \n", dsp.idVendor);
+          g_printerr ("Goal device IdProduct %d: \n", dsp.idProduct);
           CAMERACORE_log(fp, "[CAMERACORE_log]: HotplugDeviceArrivedCallback [Call DeviceArrived()]\n");
           DeviceArrived(device);
       }
-  libusb_free_device_list(list, 1);
+  else{
+      g_printerr (" Device of no interesting IdVendor %d: \n", dsp.idVendor);
+      g_printerr (" Device of no interesting IdProduct %d: \n", dsp.idProduct);
+  }
   return 0;
 }
 
@@ -146,10 +144,63 @@ int DeviceArrived(  struct Device* device){
   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Call Fuc. isAndroidInAcc()\n");
   libusb_ret = isAndroidInAcc(&device->device_descriptor);
   if(!libusb_ret){
-    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [The Android device is not in USB Accessory mode] \n");
-    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Call Fuc. switchAndroidToAcc] \n");
-    switchAndroidToAcc(device);
-  }
+      CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [The Android device is not in USB Accessory mode] \n");
+      CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Call Fuc. switchAndroidToAcc] \n");
+      switchAndroidToAcc(device);
+/*  
+      CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Updata the device Info] \n");
+  
+      CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_get_device_list()]\n");
+      
+  
+      struct libusb_device **list;
+      int cnt = libusb_get_device_list(device->libusb_context_cameracore, &list);
+      if (cnt < 0){
+        CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Getting device list failed]\n");
+      }
+      int i;
+      for (i = 0; i < cnt; i++) {
+        libusb_device *dev = list[i];
+        struct libusb_device_descriptor dsp;
+        int libusb_ret = libusb_get_device_descriptor(dev, &dsp);
+        if (LIBUSB_SUCCESS != libusb_ret) {
+          CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [libusb_get_device_descriptor failed]\n");
+          return -1;
+        }
+        g_printerr ("List Device IdVendor %d: \n", dsp.idVendor);
+        g_printerr ("List Device IdProduct %d: \n", dsp.idProduct);
+        if (is_interesting(&dsp)) {
+            device->device_libusb =dev;
+            g_printerr ("Affter update the device mode Device IdVendor %d: \n", dsp.idVendor);
+            g_printerr ("Affter update the device mode Device IdProduct %d: \n", dsp.idProduct);
+            CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Call DeviceArrived()]\n");
+            int libusb_ret = libusb_get_device_descriptor(device->device_libusb, &device->device_descriptor);
+            if (LIBUSB_SUCCESS != libusb_ret) {
+                CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceArrived [libusb_get_device_descriptor failed]\n");
+                return -1;
+            }
+            //break;
+        }
+      }
+      libusb_free_device_list(list, 1);
+*/
+/*      CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Check agin isAndroidInAcc()] \n");
+      libusb_ret = isAndroidInAcc(&device->device_descriptor);
+      if(libusb_ret){
+          CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Android device is in the USB Accessory mode] \n");
+          g_printerr ("In DeviceArrived Device affter switchAndroidToAcc idVendor %d: \n", device->device_descriptor.idVendor);
+          g_printerr ("In DeviceArrived Device affter switchAndroidToAcc idProduct %d: \n", device->device_descriptor.idProduct);
+      } else{
+            CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Android device is still not in the USB Accessory mode] \n");
+            g_printerr ("In DeviceArrived Device affter switchAndroidToAcc idVendor %d: \n", device->device_descriptor.idVendor);
+            g_printerr ("In DeviceArrived Device affter switchAndroidToAcc idProduct %d: \n", device->device_descriptor.idProduct);
+        }
+*/
+  } else{
+          CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [Android device is in the USB Accessory mode] \n");
+          g_printerr ("In DeviceArrived Device in ACC mode idVendor %d: \n", device->device_descriptor.idVendor);
+          g_printerr ("In DeviceArrived Device in ACC mode idProduct %d: \n", device->device_descriptor.idProduct);
+    }
 
 
   CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceArrived [call libusb_open()]\n");
@@ -356,7 +407,7 @@ void switchAndroidToAcc(struct Device *device) {
 
 
 int IsGoogleAccessory(struct libusb_device_descriptor* desptr) {
-  return (kAoaVid == desptr->idVendor);
+  return (kAoaVid == desptr->idVendor) || (0x18d1 == desptr->idVendor);
 }
 
 
@@ -437,11 +488,6 @@ int DeviceConnect(struct Device* device){
  
 
 
-  // if (!FindEndpoints(device)) {
-  //   CAMERACORE_log(fp, "[CAMERACORE_log]:DeviceConnect [Device cannt connect because endPoints was not found]");
-  //   return -1;
-  // }
-
    /********************************************
       向上层通知 设备链接成功，可以进行数据传输
     *********************************************/
@@ -514,7 +560,7 @@ int PostOutTransfer(struct Device * device) {
   CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostOutTransfer [Call libusb_submit_transfer()]\n");
   const int libusb_ret = libusb_submit_transfer(out_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]:PostOutTransfer [libusb_submit_transfer failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostOutTransfer [libusb_submit_transfer failed]\n");
     AbortConnection();
     return -1;
   }
@@ -525,7 +571,7 @@ int PostInTransfer(struct Device * device){
 
   struct libusb_transfer* in_transfer = libusb_alloc_transfer(0);
   if (NULL == in_transfer) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]: DeviceConnect [libusb_alloc_transfer failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. DeviceConnect [libusb_alloc_transfer failed]\n");
     return -1;
   }
 
@@ -534,7 +580,7 @@ int PostInTransfer(struct Device * device){
                             InTransferCallback, NULL, 0);
   const int libusb_ret = libusb_submit_transfer(in_transfer);
   if (LIBUSB_SUCCESS != libusb_ret) {
-    CAMERACORE_log(fp, "[CAMERACORE_log]: PostInTransfer [libusb_submit_transfer failed]\n");
+    CAMERACORE_log(fp, "[CAMERACORE_log]: In Fuc. PostInTransfer [libusb_submit_transfer failed]\n");
     // CAMERACORE_log(fp,libusb_error_name(libusb_ret));
     // CAMERACORE_log(fp,"]");
     return -1;
